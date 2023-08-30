@@ -1,0 +1,7 @@
+name = "sub"
+main = "src/worker.ts"
+compatibility_date = "2023-08-21"
+
+kv_namespaces = [
+  { binding = "settings", id = "81a60b6377434ba4bc4a97629fc74405" }
+]
