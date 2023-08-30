@@ -1,9 +1,9 @@
 import { connect } from 'cloudflare:sockets'
 import { Stringify } from "./helpers"
-import { RemoteSocketWrapper, Env } from "./interfaces"
+import { RemoteSocketWrapper, CustomArrayBuffer, VlessHeader, UDPOutbound, Env } from "./interfaces"
 
-const WS_READY_STATE_OPEN = 1
-const WS_READY_STATE_CLOSING = 2
+const WS_READY_STATE_OPEN: number = 1
+const WS_READY_STATE_CLOSING: number = 2
 
 export async function VlessOverWSHandler(request: Request, env: Env) {
     const uuid: string = await env.settings.get("UUID") || "d342d11e-d424-4583-b36e-524ab1f0afa4"
@@ -38,8 +38,9 @@ export async function VlessOverWSHandler(request: Request, env: Env) {
 			const {
 				hasError,
 				message,
-				portRemote = 443,
 				addressRemote = '',
+				addressType,
+				portRemote = 443,
 				rawDataIndex,
 				vlessVersion = new Uint8Array([0, 0]),
 				isUDP,
@@ -58,15 +59,15 @@ export async function VlessOverWSHandler(request: Request, env: Env) {
 				}
 			}
 			const vlessResponseHeader: Uint8Array = new Uint8Array([vlessVersion[0], 0])
-			const rawClientData = chunk.slice(rawDataIndex)
+			const rawClientData: Uint8Array = chunk.slice(rawDataIndex)
 
 			if (isDns) {
-				const { write } = await HandleUDPOutBound(webSocket, vlessResponseHeader)
+				const { write }: UDPOutbound = await HandleUDPOutbound(webSocket, vlessResponseHeader)
 				udpStreamWrite = write
 				udpStreamWrite(rawClientData)
 				return
 			}
-			HandvarCPOutBound(remoteSocketWapper, addressRemote, portRemote, rawClientData, webSocket, vlessResponseHeader)
+			HandvarCPOutbound(remoteSocketWapper, addressRemote, portRemote, rawClientData, webSocket, vlessResponseHeader)
 		}
 	})).catch((err) => {
 		//
@@ -78,7 +79,7 @@ export async function VlessOverWSHandler(request: Request, env: Env) {
 	})
 }
 
-function MakeReadableWebSocketStream(webSocketServer: WebSocket, earlyDataHeader: string) {
+function MakeReadableWebSocketStream(webSocketServer: WebSocket, earlyDataHeader: string): ReadableStream {
 	var readableStreamCancel: boolean = false
 	const stream: ReadableStream = new ReadableStream({
 		start(controller) {
@@ -96,14 +97,12 @@ function MakeReadableWebSocketStream(webSocketServer: WebSocket, earlyDataHeader
 					return
 				}
 				controller.close()
-			}
-			)
+			})
 			webSocketServer.addEventListener('error', (err) => {
 				controller.error(err)
-			}
-			)
-			// for ws 0rtt
-			const { earlyData, error } = Base64ToArrayBuffer(earlyDataHeader)
+			})
+
+			const {earlyData, error}: CustomArrayBuffer = Base64ToArrayBuffer(earlyDataHeader)
 			if (error) {
 				controller.error(error)
 			} else if (earlyData) {
@@ -122,12 +121,12 @@ function MakeReadableWebSocketStream(webSocketServer: WebSocket, earlyDataHeader
 	return stream
 }
 
-function ProcessVlessHeader(vlessBuffer: ArrayBuffer, uuid: string) {
+function ProcessVlessHeader(vlessBuffer: ArrayBuffer, uuid: string): VlessHeader {
 	if (vlessBuffer.byteLength < 24) {
 		return {
 			hasError: true,
 			message: 'Invalid data',
-		}
+		} as VlessHeader
 	}
 	const version: Uint8Array = new Uint8Array(vlessBuffer.slice(0, 1))
 	var isValidUser: boolean = false
@@ -139,7 +138,7 @@ function ProcessVlessHeader(vlessBuffer: ArrayBuffer, uuid: string) {
 		return {
 			hasError: true,
 			message: 'Invalid user',
-		}
+		} as VlessHeader
 	}
 
 	const optLength: number = new Uint8Array(vlessBuffer.slice(17, 18))[0]
@@ -155,7 +154,7 @@ function ProcessVlessHeader(vlessBuffer: ArrayBuffer, uuid: string) {
 		return {
 			hasError: true,
 			message: `Command ${command} is not support, command 01-tcp, 02-udp, 03-mux`,
-		}
+		} as VlessHeader
 	}
 	const portIndex: number = 18 + optLength + 1
 	const portBuffer: ArrayBuffer = vlessBuffer.slice(portIndex, portIndex + 2)
@@ -201,27 +200,27 @@ function ProcessVlessHeader(vlessBuffer: ArrayBuffer, uuid: string) {
 			return {
 				hasError: true,
 				message: `invild  addressType is ${addressType}`,
-			}
+			} as VlessHeader
 	}
 	if (!addressValue) {
 		return {
 			hasError: true,
 			message: `addressValue is empty, addressType is ${addressType}`,
-		}
+		} as VlessHeader
 	}
 
 	return {
 		hasError: false,
 		addressRemote: addressValue,
-		addressType,
-		portRemote,
+		addressType: addressType,
+		portRemote: portRemote,
 		rawDataIndex: addressValueIndex + addressLength,
 		vlessVersion: version,
-		isUDP,
-	}
+		isUDP: isUDP,
+	} as VlessHeader
 }
 
-async function HandleUDPOutBound(webSocket: WebSocket, vlessResponseHeader: ArrayBuffer) {
+async function HandleUDPOutbound(webSocket: WebSocket, vlessResponseHeader: ArrayBuffer): Promise<UDPOutbound> {
 
 	var isVlessHeaderSent = false
 	const transformStream = new TransformStream({
@@ -271,7 +270,7 @@ async function HandleUDPOutBound(webSocket: WebSocket, vlessResponseHeader: Arra
 	}
 }
 
-async function HandvarCPOutBound(remoteSocket: RemoteSocketWrapper, addressRemote: string, portRemote: number, rawClientData: Uint8Array, webSocket: WebSocket, vlessResponseHeader: Uint8Array) {
+async function HandvarCPOutbound(remoteSocket: RemoteSocketWrapper, addressRemote: string, portRemote: number, rawClientData: Uint8Array, webSocket: WebSocket, vlessResponseHeader: Uint8Array): Promise<void> {
 	async function connectAndWrite(address: string, port: number) {
 		const tcpSocket: Socket = connect({
 			hostname: address,
@@ -296,7 +295,7 @@ async function HandvarCPOutBound(remoteSocket: RemoteSocketWrapper, addressRemot
 	RemoteSocketToWS(tcpSocket, webSocket, vlessResponseHeader, retry)
 }
 
-async function RemoteSocketToWS(remoteSocket: Socket, webSocket: WebSocket, vlessResponseHeader: ArrayBuffer, retry: (() => Promise<void>) | null) {
+async function RemoteSocketToWS(remoteSocket: Socket, webSocket: WebSocket, vlessResponseHeader: ArrayBuffer, retry: (() => Promise<void>) | null): Promise<void> {
 	var vlessHeader: ArrayBuffer | null = vlessResponseHeader
 	var hasIncomingData: boolean = false
 	await remoteSocket.readable
@@ -329,7 +328,7 @@ async function RemoteSocketToWS(remoteSocket: Socket, webSocket: WebSocket, vles
 	}
 }
 
-function SafeCloseWebSocket(socket: WebSocket) {
+function SafeCloseWebSocket(socket: WebSocket): void {
 	try {
 		if (socket.readyState === WS_READY_STATE_OPEN || socket.readyState === WS_READY_STATE_CLOSING) {
 			socket.close()
@@ -337,9 +336,10 @@ function SafeCloseWebSocket(socket: WebSocket) {
 	} catch (error) { }
 }
 
-function Base64ToArrayBuffer(base64Str: string) {
+function Base64ToArrayBuffer(base64Str: string): CustomArrayBuffer {
 	if (!base64Str) {
 		return {
+			earlyData: null,
             error: null
         }
 	}
@@ -353,6 +353,7 @@ function Base64ToArrayBuffer(base64Str: string) {
         }
 	} catch (error) {
 		return {
+			earlyData: null,
             error
         }
 	}
