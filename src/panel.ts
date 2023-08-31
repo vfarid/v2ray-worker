@@ -107,10 +107,6 @@ export async function GetPanel(request: Request, env: Env): Promise<Response> {
                 <input type="checkbox" name="protocols" value="ss" class="form-check-input" id="vmess-protocol-ckeck" ${protocols.includes('ss') ? "checked" : ""}>
                 <label class="form-check-label" for="vmess-protocol-ckeck">ShadowSocks</label>
               </div>
-              <div class="mb-3 form-check">
-                <input type="checkbox" name="protocols" value="ssr" class="form-check-input" id="vmess-protocol-ckeck" ${protocols.includes('ssr') ? "checked" : ""}>
-                <label class="form-check-label" for="vmess-protocol-ckeck">ShadowSocksR</label>
-              </div>
             </div>
           </div>
           <div class="mb-3 pb-2">
