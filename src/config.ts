@@ -1,14 +1,16 @@
+import { Buffer } from 'buffer'
 import { IsIp, IsValidUUID } from "./helpers"
 import { cfPorts, supportedCiphers } from "./variables"
+import { Config } from "./interfaces"
 
-export function MixConfig(cnf: any, url: URL, address: string, provider: string): object {
+export function MixConfig(cnf: Config, url: URL, address: string, provider: string): Config | null {
 	try {
 		var conf = {...cnf};
-		if (!conf.tls && conf.network == "ws") {
-			return {}
+		if (!conf.tls || conf.network != "ws") {
+			return null
 		}
 
-		var addr = null
+		var addr = ""
 		if (conf.servername) {
 			addr = conf.servername
 		} else if (conf["ws-opts"] && conf["ws-opts"].headers.Host && !IsIp(conf["ws-opts"].headers.Host)) {
@@ -17,79 +19,243 @@ export function MixConfig(cnf: any, url: URL, address: string, provider: string)
 			addr = conf.server
 		}
 		if (!addr) {
-			return {}
+			return null
 		}
 		if (!conf.port) {
 			conf.port = 443
 		}
 
 		if (!cfPorts.includes(conf.port)) {
-			return {}
+			return null
 		}
 
-		if (addr.endsWith('.workers.dev')) {
-			const part1 = conf["ws-opts"].path.split("/").pop()
-			const part2 = conf["ws-opts"].path.substring(0, conf["ws-opts"].path.length - part1.length - 1)
-			var path = ""
-			if (part1.includes(":")) {
-				addr = part1.replace(/^\//g, "").split(":")
-				conf.port = parseInt(addr[1])
-				addr = addr[0]
-				path = "/" + part2.replace(/^\//g, "")
-			} else if (part2.includes(":")) {
-				addr = part2.replace(/^\//g, "").split(":")
-				conf.port = parseInt(addr[1])
-				addr = addr[0]
-				path = "/" + part1.replace(/^\//g, "")
-			} else if (part1.includes(".")) {
-				addr = part1.replace(/^\//g, "")
-				conf.port = 443
-				path = "/" + part2.replace(/^\//g, "")
-			} else {
-				addr = part2.replace(/^\//g, "")
-				conf.port = 443
-				path = "/" + part1.replace(/^\//g, "")
-			}
-			conf["ws-opts"].path = path
-		}
-
-		if (provider) {
-			conf.name =  conf.name + "-" + provider
+		if (addr.endsWith('.workers.dev') && conf.path) {
+			// const [part1, part2] = conf.path.split("/")
+			// var path = ""
+			// if (part1.includes(":")) {
+			// 	addr = part1.replace(/^\//g, "").split(":")
+			// 	conf.port = parseInt(addr[1])
+			// 	addr = addr[0]
+			// 	path = "/" + part2.replace(/^\//g, "")
+			// } else if (part2.includes(":")) {
+			// 	addr = part2.replace(/^\//g, "").split(":")
+			// 	conf.port = parseInt(addr[1])
+			// 	addr = addr[0]
+			// 	path = "/" + part1.replace(/^\//g, "")
+			// } else if (part1.includes(".")) {
+			// 	addr = part1.replace(/^\//g, "")
+			// 	conf.port = 443
+			// 	path = "/" + part2.replace(/^\//g, "")
+			// } else {
+			// 	addr = part2.replace(/^\//g, "")
+			// 	conf.port = 443
+			// 	path = "/" + part1.replace(/^\//g, "")
+			// }
+			// conf["ws-opts"].path = path
+      return null
 		}
 
 		conf.name = conf.name + "-worker"
-		conf["ws-opts"].headers.Host = url.hostname
+    const path = conf["ws-opts"]?.path || conf.path
+    const host = conf["ws-opts"]?.headers.Host || conf.host
+    conf["ws-opts"] = {
+      path: "",
+      headers: {
+        Host: url.hostname
+      }
+    }
 		conf.servername = url.hostname
 		conf.server = address
-		conf.path = "/" + addr + (conf["ws-opts"].path ? "/" + conf["ws-opts"].path.replace(/^\//g, "") : "")
-		conf.provider = provider
+		conf.path = "/" + addr + (path ? "/" + path.replace(/^\//g, "") : "")
+    conf["ws-opts"].path = conf.path
 		conf.merged = true
 		return conf
 	} catch (e) {
-		return {}
+		return null
 	}
 }
 
-export function ValidateConfig(
-	cnf: any,
-	provider: string
-): object {
-	try {
-		var conf = {...cnf};
-
-		if (["ss", "ssr"].includes(conf.type) && !supportedCiphers.includes(conf.cipher)) {
-			return {}
-		}
-		if (conf.uuid && !IsValidUUID(conf.uuid)) {
-			console.log("invalid uuid", conf.uuid)
-			return {}
-		}
-
-		conf.name = conf.name + "-" + provider
-		conf.provider = provider
-		conf.merged = false
-		return conf
-	} catch (e) {
-		return {}
+export function EncodeConfig(conf: Config): string {
+  try {
+    if (conf.type == "vmess") {
+      return `${conf.type}://${Buffer.from(JSON.stringify(conf), "utf-8").toString("base64")}`
+    } else if (conf.type == "vless") {
+      return `${
+        conf.type
+      }://${
+        conf.uuid || conf.password
+      }@${
+        conf.server
+      }:${
+        conf.port
+      }?encryption=${
+        encodeURIComponent(conf.cipher || "none")
+      }&type=${
+        conf.network || "tcp"
+      }&path=${
+        encodeURIComponent(conf.path || "")
+      }&host=${
+        encodeURIComponent(conf.host || conf.server)
+      }${
+        conf.alpn ? "&alpn=" + encodeURIComponent(conf.alpn) : ""
+      }${
+        conf.fp ? "&fp=" + encodeURIComponent(conf.fp) : ""
+      }${
+        conf.tls ? "&security=tls" : ""
+      }&sni=${
+        encodeURIComponent(conf.servername || conf.host || conf.server)
+      }#${
+        encodeURIComponent(conf.name)
+      }`;
+    } else if (conf.type == "trojan") {
+      return `${
+        conf.type
+      }://${
+        conf.password || conf.uuid
+      }@${
+        conf.server
+      }:${
+        conf.port
+      }?cipher=${
+        encodeURIComponent(conf.cipher || "none")
+      }&type=${
+        conf.type
+      }${
+        conf.path ? "&path=" + encodeURIComponent(conf.path) : ""
+      }&host=${
+        encodeURIComponent(conf.host || conf.server)
+      }${
+        conf.alpn ? "&alpn=" + encodeURIComponent(conf.alpn) : ""
+      }${
+        conf.fp ? "&fp=" + encodeURIComponent(conf.fp) : ""
+      }${
+        conf.tls ? "&tls=1" : ""
+      }&sni=${
+        encodeURIComponent(conf.servername || conf.host || conf.server)
+      }#${
+        encodeURIComponent(conf.name)
+      }`;
+    } else if (conf.type == "ss") {
+      return `${
+        conf.type
+      }://${
+        conf.password || conf.uuid
+      }@${
+        conf.server
+      }:${
+        conf.port
+      }?cipher=${
+        encodeURIComponent(conf.cipher || "none")
+      }&type=${
+        conf.type
+      }${
+        conf.path ? "&path=" + encodeURIComponent(conf.path) : ""
+      }${
+        conf.host ? "&host=" + encodeURIComponent(conf.host) : ""
+      }${
+        conf.tfo ? "&tfo=1" : ""
+      }${
+        conf.servername ? "&sni=" + encodeURIComponent(conf.servername) : ""
+      }${
+        conf.obfs ? "&obfs=" + encodeURIComponent(conf.obfs) : ""
+      }${
+        conf.protocol ? "&protocol=" + encodeURIComponent(conf.protocol) : ""
+      }${
+        conf["protocol-param"] ? "&protocol-param=" + encodeURIComponent(conf["protocol-param"]) : ""
+      }${
+        conf["obfs-param"] ? "&obfs-param=" + encodeURIComponent(conf["obfs-param"]) : ""
+      }#${
+        encodeURIComponent(conf.name)
+      }`;
+    } else if (conf.type == "ssr") {
+      return `${conf.type}://${Buffer.from(JSON.stringify(conf), "utf-8").toString("base64")}`
+    }
+  } catch (e) {
+    console.log(e)
+  }
+  return ""
+}
+  
+export function DecodeConfig(configStr: string): Config {
+	var match: any = null
+	var conf: any = null
+	if (configStr.startsWith("vmess://")) {
+	  try {
+      conf = JSON.parse(Buffer.from(configStr.substring(8), "base64").toString("utf-8"))
+      conf = {
+        name: conf?.ps || conf?.name,
+        server: conf?.add,
+        port: conf?.port || 443,
+        type: "vmess",
+        uuid: conf?.id || conf?.password,
+        alterId: conf?.aid || 0,
+        cipher: conf?.cipher || "auto",
+        tls: conf?.tls == "tls",
+        "skip-cert-verify": true,
+        servername: conf?.sni || conf?.host,
+        network: conf?.net,
+        path: conf?.path || "",
+        host: conf?.host || conf?.sni,
+        alpn: conf?.alpn,
+        fp: conf["client-fingerprint"] || conf?.fp,
+        "ws-opts": {
+          path: conf?.path || "",
+          headers: {
+            Host: conf?.host || conf?.sni,
+          }
+        },
+        udp: true,
+      } as Config
+    } catch (e) { }
+	} else if (match = configStr.match(/^(?<type>trojan|vless):\/\/(?<id>.*)@(?<server>.*):(?<port>\d+)\??(?<options>.*)#(?<ps>.*)$/)) {
+	  try {
+		const optionsArr = match.groups.options.split('&') ?? []
+		const optionsObj = optionsArr.reduce((obj: Record<string, string>, option: string) => {
+		  const [key, value] = option.split('=')
+		  obj[key] = decodeURIComponent(value)
+		  return obj
+		}, {} as Record<string, string>)
+  
+    conf = {
+      name: match.groups?.ps,
+      server: match.groups?.server,
+      port: match.groups.port ?? 443,
+      type: match.groups.type,
+      uuid: match.groups.id,
+      alterId: conf.aid ?? 0,
+      cipher: "auto",
+      tls: (optionsObj.security ?? "none") == "tls",
+      "skip-cert-verify": true,
+      servername: optionsObj?.sni,
+      network: optionsObj.type ?? (optionsObj.net ?? "tcp"),
+      path: optionsObj?.path,
+      host: optionsObj?.host,
+		  alpn: optionsObj?.alpn,
+		  fp: optionsObj?.fp || "randomized",
+      "ws-opts": {
+        path: conf?.path || "",
+        headers: {
+          Host: conf?.host || conf?.sni,
+        }
+      },
+      udp: true,
+    } as Config
+    
+	  } catch (e) { }
 	}
+	return conf
+}
+
+export function ValidateConfig(conf: Config): boolean {
+	try {
+		if (["vmess", "vless"].includes(conf.type) && IsValidUUID(conf.uuid as string) && conf.name) {
+      return !!(conf.server || conf.servername)
+		} else if (["trojan"].includes(conf.type) && (conf.uuid || conf.password) && conf.name) {
+      return !!(conf.server || conf.servername)
+		} else if (["ss", "ssr"].includes(conf.type) && supportedCiphers.includes(conf.cipher as string)) {
+      return !!(conf.server || conf.servername)
+		}
+	} catch (e) { }
+
+  return false
 }
