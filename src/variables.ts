@@ -34,14 +34,6 @@ export const defaultPFList: Array<string> = [
   "randomized",
 ]
 
-export const defaultDomainList: Array<string> = [
-	"www.speedtest.net",
-	"workers.dev",
-	"fake.id.workers.dev",
-	"codepen.io",
-	"api.jquery.com",
-]
-
 export const cfPorts: Array<number> = [
 	443,
 	2053,
