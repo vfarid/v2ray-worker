@@ -6,27 +6,30 @@
 
 import { VlessOverWSHandler } from "./vless"
 import { GetPanel, PostPanel } from "./panel"
-import { GetConfigList } from "./sub"
-import { Env } from "./interfaces"
+import { GetConfigList } from "./collector"
+import { ToYamlSubscription } from "./clash"
+import { ToBase64Subscription } from "./sub"
+import { Env, Config } from "./interfaces"
 
 export default {
   async fetch(request: Request, env: Env): Promise<Response> {
     const url: URL = new URL(request.url)
     const path: string = url.pathname.replace(/^\/|\/$/g, "")
-    if (path.toLowerCase() == "sub") {
-      const outputType: string = (await env.settings.get("OutputType")) || "base64"
-      const configList: Array<object> = await GetConfigList(url, env)
-      if (outputType == 'yaml') {
-        return new Response('YAML');
+    const outputType = path.toLowerCase()
+    if (["sub", "clash"].includes(outputType)) {
+      const configList: Array<Config> = await GetConfigList(url, env)
+      // console.log(JSON.stringify(configList))
+      if (outputType == 'clash') {
+        return new Response(ToYamlSubscription(configList));
       } else {
-        return new Response('Base64');
+        return new Response(ToBase64Subscription(configList));
       }
-    } else if (path.toLowerCase() == 'vless-ws') {
+    } else if (outputType == 'vless-ws') {
       return VlessOverWSHandler(request, env);
     } else if (path) {
       return fetch(new Request(new URL("https://" + path), request))
     } else if (request.method === 'GET') {
-      return GetPanel(url, env)
+      return GetPanel(request, env)
     } else if (request.method === 'POST') {
       return PostPanel(request, env)
     } else {
