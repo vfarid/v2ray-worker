@@ -1,6 +1,6 @@
 import { v4 as uuidv4 } from "uuid"
 import { IsValidUUID } from "./helpers"
-import { defaultProviders, defaultProtocols, defaultALPNList, defaultPFList, defaultDomainList } from "./variables"
+import { defaultProviders, defaultProtocols, defaultALPNList, defaultPFList } from "./variables"
 
 interface Env {settings: any}
 
@@ -12,7 +12,7 @@ export async function GetPanel(request: Request, env: Env): Promise<Response> {
     const alpnList: Array<string> = (await env.settings.get("ALPNs"))?.split("\n") || defaultALPNList
     const fingerPrints: Array<string> = (await env.settings.get("FingerPrints"))?.split("\n") || defaultPFList
     const providers: Array<string> = (await env.settings.get("Providers"))?.split("\n") || defaultProviders
-    const cleanDomainIPs: Array<string> = (await env.settings.get("CleanDomainIPs"))?.split("\n") || defaultDomainList
+    const cleanDomainIPs: Array<string> = (await env.settings.get("CleanDomainIPs"))?.split("\n") || []
     const configs: Array<string> = (await env.settings.get("Configs"))?.split("\n") || []
     const includeOriginalConfigs: string = await env.settings.get("IncludeOriginalConfigs") || "yes"
     const includeMergedConfigs: string = await env.settings.get("IncludeMergedConfigs") || "yes"
@@ -110,6 +110,15 @@ export async function GetPanel(request: Request, env: Env): Promise<Response> {
             </div>
           </div>
           <div class="mb-3 pb-2">
+            <label for="clean-ip" class="form-label fw-bold">
+              Clean IP or clean subdomain / آی‌پی تمیز یا ساب‌دامین آی‌پی تمیز
+            </label>
+            <textarea rows="2" name="clean_ips" class="form-control" id="clean-ip">${cleanDomainIPs.join("\n")}</textarea>
+            <div class="form-text">
+              One IP or subdomain per line. / در هر سطر یک آی‌پی یا ساب‌دامین وارد کنید.
+            </div>
+          </div>
+          <div class="mb-3 pb-2">
             <label for="alpn-list" class="form-label fw-bold">
               ALPN List:
             </label>
@@ -134,15 +143,6 @@ export async function GetPanel(request: Request, env: Env): Promise<Response> {
             <textarea rows="7" name="providers" class="form-control" id="providers">${providers.join("\n")}</textarea>
             <div class="form-text">
               One link per line. / در هر سطر یک لینک وارد کنید. (Accepts base64, yaml, raw)
-            </div>
-          </div>
-          <div class="mb-3 pb-2">
-            <label for="clean-ip" class="form-label fw-bold">
-              Clean IP or clean subdomain / آی‌پی تمیز یا ساب‌دامین آی‌پی تمیز
-            </label>
-            <textarea rows="2" name="clean_ips" class="form-control" id="clean-ip">${cleanDomainIPs.join("\n")}</textarea>
-            <div class="form-text">
-              One IP or subdomain per line. / در هر سطر یک آی‌پی یا ساب‌دامین وارد کنید.
             </div>
           </div>
           <div class="mb-3 pb-2">
