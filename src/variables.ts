@@ -1,10 +1,11 @@
 export const defaultProviders: Array<string> = [
-  "https://raw.githubusercontent.com/mahdibland/SSAggregator/master/sub/sub_merge_yaml.yml",
   "https://raw.githubusercontent.com/mfuu/v2ray/master/clash.yaml",
   "https://raw.githubusercontent.com/peasoft/NoMoreWalls/master/list.yml",
   "https://raw.githubusercontent.com/a2470982985/getNode/main/clash.yaml",
   "https://raw.githubusercontent.com/mlabalabala/v2ray-node/main/nodefree4clash.txt",
   "https://raw.githubusercontent.com/mlabalabala/v2ray-node/main/clashnode4clash.txt",
+  "https://raw.githubusercontent.com/mahdibland/V2RayAggregator/master/sub/sub_merge.txt",
+  "https://raw.githubusercontent.com/mfuu/v2ray/master/v2ray",
 ]
 
 export const defaultProtocols: Array<string> = [
@@ -14,34 +15,31 @@ export const defaultProtocols: Array<string> = [
 
 export const defaultALPNList: Array<string> = [
   "h2,http/1.1",
-  "h2,http/1.1",
   "h2",
   "http/1.1",
+  "h2,http/1.1",
 ]
 
 export const defaultPFList: Array<string> = [
   "chrome",
   "firefox",
+  "randomized",
   "safari",
   "chrome",
   "edge",
+  "randomized",
   "ios",
   "chrome",
   "android",
-  "random"
+  "randomized",
 ]
 
 export const defaultDomainList: Array<string> = [
-	"discord.com",
-	"laravel.com",
-	"cdnjs.com",
 	"www.speedtest.net",
 	"workers.dev",
-	"nginx.com",
-	"chat.openai.com",
-	"auth0.openai.com",
+	"fake.id.workers.dev",
 	"codepen.io",
-	"api.jquery.com"
+	"api.jquery.com",
 ]
 
 export const cfPorts: Array<number> = [
