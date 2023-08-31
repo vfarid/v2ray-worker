@@ -57,13 +57,13 @@ export function MixConfig(cnf: Config, url: URL, address: string, provider: stri
 
 		conf.name = conf.name + "-worker"
     const path = conf["ws-opts"]?.path || conf.path
-    const host = conf["ws-opts"]?.headers.Host || conf.host
     conf["ws-opts"] = {
       path: "",
       headers: {
         Host: url.hostname
       }
     }
+		conf.host = url.hostname
 		conf.servername = url.hostname
 		conf.server = address
 		conf.path = "/" + addr + (path ? "/" + path.replace(/^\//g, "") : "")
@@ -80,13 +80,13 @@ export function EncodeConfig(conf: Config): string {
     if (conf.type == "vmess") {
       const config = {
         type: conf.type,
-        name: conf.name,
+        ps: conf.name,
         add: conf.server,
         port: conf.port,
-        uuid: conf.uuid,
+        id: conf.uuid,
         aid: conf.alterId || 0,
         cipher: conf.cipher || "none",
-        tls: conf.tls,
+        tls: conf.tls ? "tls" : null,
         "skip-cert-verify": conf["skip-cert-verify"],
         sni: conf.servername,
         net: conf.network,
