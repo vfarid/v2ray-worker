@@ -5,10 +5,10 @@
 [English version](https://github.com/vfarid/v2ray-worker/blob/main/README.md)
 
 ### کانال یوتیوب
-تکمیل خواهد شد.
+[ویدیوی آموزشی - اندروید](https://youtu.be/Jb_6jmrKKyo)
 
 ### کانال تلگرام
-تکمیل خواهد شد.
+[در کانال تلگرام بخوانید](https://t.me/vahidgeek/140)
 
 ### روش استفاده
 برای استفاده از این کد، اسکریپت worker.js را از بخش از آخرین نسخه دانلود کرده و روی یک ورکر جدید آپلود کنید.
