@@ -3,7 +3,7 @@ import { Buffer } from 'buffer'
 import { GetVlessConfigList } from './vless'
 import { MixConfig, ValidateConfig, DecodeConfig } from "./config"
 import { GetMultipleRandomElements, GetVlessConfig, IsBase64 } from "./helpers"
-import { defaultProviders, defaultProtocols, defaultALPNList, defaultPFList, defaultDomainList } from "./variables"
+import { defaultProviders, defaultProtocols, defaultALPNList, defaultPFList } from "./variables"
 import { Env, Config } from "./interfaces"
 
 
@@ -39,7 +39,7 @@ export async function GetConfigList(url: URL, env: Env): Promise<Array<Config>> 
     fingerPrints = defaultPFList
     includeOriginalConfigs = true
     includeMergedConfigs = true
-    cleanDomainIPs = defaultDomainList
+    cleanDomainIPs = [url.hostname]
   }
 
   if (includeOriginalConfigs && includeMergedConfigs) {
