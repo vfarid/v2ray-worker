@@ -21,3 +21,6 @@
  - در صفحه اصلی ورکر، قبل از محیط ویرایشگر، به بخش Setting رفته و گزینه‌ی variables را انتخاب کنید. سپس اسکرول کنید تا به بخش KV برسید. در این بخش یک متغیر جدید با نام settings اضافه کرده و نامی که در بخش قبل برای namespace وارد کرده بودید را انتخاب کنید.
 
 اکنون میتوانید آدس ورکر خود را در بروزر وارد کرده و پنل کنترل را مشاهده کنید. راهنمای استفاده روی پنل کنترل وجود دارد.
+
+### Credits
+Built-in vless config generator is based on [Zizifn Edge Tunnel](https://github.com/zizifn/edgetunnel), re-writed using Typescript.
