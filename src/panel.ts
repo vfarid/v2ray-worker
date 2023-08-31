@@ -218,10 +218,9 @@ export async function GetPanel(request: Request, env: Env): Promise<Response> {
 }
 
 export async function PostPanel(request: Request, env: Env): Promise<Response> {
+  const url: URL = new URL(request.url)
   try {
     const formData = await request.formData();
-    const url: URL = new URL(request.url)
-
     if (formData.get("save")) {
       await env.settings.put("MaxConfigs", formData.get("max") || "200")
       await env.settings.put("Protocols", formData.getAll("protocols")?.join("\n").trim())
