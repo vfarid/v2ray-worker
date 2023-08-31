@@ -78,7 +78,27 @@ export function MixConfig(cnf: Config, url: URL, address: string, provider: stri
 export function EncodeConfig(conf: Config): string {
   try {
     if (conf.type == "vmess") {
-      return `${conf.type}://${Buffer.from(JSON.stringify(conf), "utf-8").toString("base64")}`
+      const config = {
+        type: conf.type,
+        name: conf.name,
+        add: conf.server,
+        port: conf.port,
+        uuid: conf.uuid,
+        aid: conf.alterId || 0,
+        cipher: conf.cipher || "none",
+        tls: conf.tls,
+        "skip-cert-verify": conf["skip-cert-verify"],
+        sni: conf.servername,
+        net: conf.network,
+        path: conf.path,
+        host: conf.host,
+        alpn: conf.alpn,
+        fp: conf.fp,
+        "ws-opts": conf["ws-opts"],
+        udp: conf.udp,
+        merged: conf.merged || false,
+      }
+      return `${config.type}://${Buffer.from(JSON.stringify(config), "utf-8").toString("base64")}`
     } else if (conf.type == "vless") {
       return `${
         conf.type
@@ -167,11 +187,13 @@ export function EncodeConfig(conf: Config): string {
       }#${
         encodeURIComponent(conf.name)
       }`;
-    } else if (conf.type == "ssr") {
-      return `${conf.type}://${Buffer.from(JSON.stringify(conf), "utf-8").toString("base64")}`
+    // } else if (conf.type == "ssr") {
+    //   return `${conf.type}://${Buffer.from(
+    //   `${conf.server}:${conf.port}:origin:${conf.cipher}:${conf["protocol-param"]}
+    //   , "utf-8").toString("base64")}`
     }
   } catch (e) {
-    console.log(e)
+    // console.log(e)
   }
   return ""
 }
