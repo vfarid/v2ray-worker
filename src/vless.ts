@@ -1,12 +1,33 @@
+import { UUID } from "crypto";
 import { connect } from 'cloudflare:sockets'
-import { Stringify } from "./helpers"
-import { RemoteSocketWrapper, CustomArrayBuffer, VlessHeader, UDPOutbound, Env } from "./interfaces"
+import { GetVlessConfig } from "./helpers"
+import { cfPorts } from "./variables"
+import { RemoteSocketWrapper, CustomArrayBuffer, VlessHeader, UDPOutbound, Config, Env } from "./interfaces"
 
 const WS_READY_STATE_OPEN: number = 1
 const WS_READY_STATE_CLOSING: number = 2
 
+export async function GetVlessConfigList(sni: string, addressList: Array<string>, env: Env) {
+  const uuid: string | null = await env.settings.get("UUID")
+  var configList: Array<Config> = []
+  console.log(addressList)
+  if (uuid) {
+    for (var i = 0; i < 10; i++) {
+      configList.push(GetVlessConfig(
+        i + 1,
+        uuid as UUID,
+        sni,
+        addressList[Math.floor(Math.random() * addressList.length)],
+        cfPorts[Math.floor(Math.random() * cfPorts.length)]
+      ))
+    }
+  }
+
+  return configList
+}
+
 export async function VlessOverWSHandler(request: Request, env: Env) {
-    const uuid: string = await env.settings.get("UUID") || "d342d11e-d424-4583-b36e-524ab1f0afa4"
+  const uuid: string = await env.settings.get("UUID") || ""
 	console.log(uuid)
 	const [client, webSocket]: Array<WebSocket> = Object.values(new WebSocketPair)
 
@@ -45,19 +66,21 @@ export async function VlessOverWSHandler(request: Request, env: Env) {
 				vlessVersion = new Uint8Array([0, 0]),
 				isUDP,
 			} = ProcessVlessHeader(chunk, uuid)
-			address = addressRemote
+			
+      address = addressRemote
 			portWithRandomLog = `${portRemote}--${Math.random()} ${isUDP ? 'udp ' : 'tcp '} `
 			if (hasError) {
 				throw new Error(message)
 			}
 
-            if (isUDP) {
+      if (isUDP) {
 				if (portRemote === 53) {
 					isDns = true
 				} else {
 					throw new Error('UDP proxy only enable for DNS which is port 53')
 				}
 			}
+
 			const vlessResponseHeader: Uint8Array = new Uint8Array([vlessVersion[0], 0])
 			const rawClientData: Uint8Array = chunk.slice(rawDataIndex)
 
@@ -67,11 +90,10 @@ export async function VlessOverWSHandler(request: Request, env: Env) {
 				udpStreamWrite(rawClientData)
 				return
 			}
+
 			HandvarCPOutbound(remoteSocketWapper, addressRemote, portRemote, rawClientData, webSocket, vlessResponseHeader)
 		}
-	})).catch((err) => {
-		//
-	})
+	})).catch((err) => { })
 
 	return new Response(null, {
 		status: 101,
@@ -98,12 +120,14 @@ function MakeReadableWebSocketStream(webSocketServer: WebSocket, earlyDataHeader
 				}
 				controller.close()
 			})
+
 			webSocketServer.addEventListener('error', (err) => {
 				controller.error(err)
 			})
 
 			const {earlyData, error}: CustomArrayBuffer = Base64ToArrayBuffer(earlyDataHeader)
-			if (error) {
+			
+      if (error) {
 				controller.error(error)
 			} else if (earlyData) {
 				controller.enqueue(earlyData)
@@ -128,12 +152,15 @@ function ProcessVlessHeader(vlessBuffer: ArrayBuffer, uuid: string): VlessHeader
 			message: 'Invalid data',
 		} as VlessHeader
 	}
+
 	const version: Uint8Array = new Uint8Array(vlessBuffer.slice(0, 1))
 	var isValidUser: boolean = false
 	var isUDP: boolean = false
-	if (Stringify(new Uint8Array(vlessBuffer.slice(1, 17))) === uuid) {
+	
+  if (Stringify(new Uint8Array(vlessBuffer.slice(1, 17))) === uuid) {
 		isValidUser = true
 	}
+
 	if (!isValidUser) {
 		return {
 			hasError: true,
@@ -156,6 +183,7 @@ function ProcessVlessHeader(vlessBuffer: ArrayBuffer, uuid: string): VlessHeader
 			message: `Command ${command} is not support, command 01-tcp, 02-udp, 03-mux`,
 		} as VlessHeader
 	}
+
 	const portIndex: number = 18 + optLength + 1
 	const portBuffer: ArrayBuffer = vlessBuffer.slice(portIndex, portIndex + 2)
 	const portRemote: number = new DataView(portBuffer).getUint16(0)
@@ -169,7 +197,8 @@ function ProcessVlessHeader(vlessBuffer: ArrayBuffer, uuid: string): VlessHeader
 	var addressLength: number = 0
 	var addressValueIndex: number = addressIndex + 1
 	var addressValue: string = ""
-	switch (addressType) {
+	
+  switch (addressType) {
 		case 1:
 			addressLength = 4
 			addressValue = new Uint8Array(
@@ -221,7 +250,6 @@ function ProcessVlessHeader(vlessBuffer: ArrayBuffer, uuid: string): VlessHeader
 }
 
 async function HandleUDPOutbound(webSocket: WebSocket, vlessResponseHeader: ArrayBuffer): Promise<UDPOutbound> {
-
 	var isVlessHeaderSent = false
 	const transformStream = new TransformStream({
 		transform(chunk, controller) {
@@ -340,21 +368,52 @@ function Base64ToArrayBuffer(base64Str: string): CustomArrayBuffer {
 	if (!base64Str) {
 		return {
 			earlyData: null,
-            error: null
-        }
+      error: null
+    }
 	}
 	try {
 		base64Str = base64Str.replace(/-/g, '+').replace(/_/g, '/')
 		const decode: string = atob(base64Str)
 		const arryBuffer: Uint8Array = Uint8Array.from(decode, (c) => c.charCodeAt(0))
 		return {
-            earlyData: arryBuffer.buffer,
-            error: null
-        }
+      earlyData: arryBuffer.buffer,
+      error: null
+    }
 	} catch (error) {
 		return {
 			earlyData: null,
-            error
-        }
+      error
+    }
 	}
+}
+
+function IsValidVlessUUID(uuid: string): boolean {
+	return /^[0-9a-f]{8}-[0-9a-f]{4}-[4][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(uuid);
+}
+
+function Stringify(arr: Uint8Array, offset: number = 0): UUID {
+	const uuid: UUID = UnsafeStringify(arr, offset);
+	if (!IsValidVlessUUID(uuid)) {
+		throw TypeError("Stringified UUID is invalid");
+	}
+	return uuid;
+}
+
+const byteToHex: Array<string> = [];
+for (var i = 0; i < 256; ++i) {
+	byteToHex.push((i + 256).toString(16).slice(1));
+}
+
+function UnsafeStringify(arr: Uint8Array, offset = 0) : UUID {
+	return `${
+		byteToHex[arr[offset + 0]] + byteToHex[arr[offset + 1]] + byteToHex[arr[offset + 2]] + byteToHex[arr[offset + 3]]
+	}-${
+		byteToHex[arr[offset + 4]] + byteToHex[arr[offset + 5]]
+	}-${
+		byteToHex[arr[offset + 6]] + byteToHex[arr[offset + 7]]
+	}-${
+		byteToHex[arr[offset + 8]] + byteToHex[arr[offset + 9]]
+	}-${
+		byteToHex[arr[offset + 10]] + byteToHex[arr[offset + 11]] + byteToHex[arr[offset + 12]] + byteToHex[arr[offset + 13]] + byteToHex[arr[offset + 14]] + byteToHex[arr[offset + 15]]
+	}`.toLowerCase() as UUID;
 }
