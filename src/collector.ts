@@ -67,7 +67,7 @@ export async function GetConfigList(url: URL, env: Env): Promise<Array<Config>> 
           content = Buffer.from(content, "base64").toString("utf-8")
           tmpType = "base64"
         }
-        newConfigs = content.split("\n").filter((cnf: string) => cnf.match(/^(vmess|vless|trojan|ss|ssr):\/\//i))
+        newConfigs = content.split("\n").filter((cnf: string) => cnf.match(/^(vmess|vless|trojan|ss):\/\//i))
         newConfigs = newConfigs.map(DecodeConfig).filter(ValidateConfig)
       }
       if (includeMergedConfigs) {
@@ -156,7 +156,7 @@ export async function GetConfigList(url: URL, env: Env): Promise<Array<Config>> 
       return conf
     })
   }
-  
+
   if (fingerPrints.length) {
     finalConfigList = finalConfigList.map((conf: Config) => {
       conf.fp = fingerPrints[Math.floor(Math.random() * fingerPrints.length)]
