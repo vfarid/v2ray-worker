@@ -8,6 +8,7 @@
   },
   "devDependencies": {
     "@cloudflare/workers-types": "^4.20230419.0",
+    "@types/bcryptjs": "^2.4.3",
     "@types/js-yaml": "^4.0.5",
     "@types/node": "^20.5.7",
     "@types/qrcode": "^1.5.1",
@@ -20,6 +21,7 @@
     "wrangler": "^3.6.0"
   },
   "dependencies": {
+    "bcryptjs": "^2.4.3",
     "uuid": "^9.0.0"
   }
 }

@@ -1,5 +1,5 @@
-import { UUID } from "crypto";
-import { Config } from "./interfaces";
+import { UUID } from "crypto"
+import { Config } from "./interfaces"
 
 export function GetMultipleRandomElements(arr: Array<any>, num: number): Array<any> {
 	var shuffled = arr.sort(() => 0.5 - Math.random())
@@ -22,7 +22,7 @@ export function IsIp(str: string): boolean {
 }
 
 export function IsValidUUID(uuid: string): boolean {
-	return /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(uuid);
+	return /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(uuid)
 }
 
 export function GetVlessConfig(no: number, uuid: UUID, sni: string, address: string, port: number) {
@@ -51,4 +51,29 @@ export function GetVlessConfig(no: number, uuid: UUID, sni: string, address: str
 
 export function IsBase64(str: string): boolean {
 	return /^(?:[A-Za-z0-9+/]{4})*(?:[A-Za-z0-9+/]{2}==|[A-Za-z0-9+/]{3}=|[A-Za-z0-9+/]{4})$/.test(str)
+}
+
+export function RemoveDuplicateConfigs(configList: Array<Config>): Array<Config> {
+  const seen: { [key: string]: boolean } = {}
+
+  return configList.filter((conf: Config) => {
+    const key = conf.name + conf.port + conf.server + (conf.uuid || conf.password)
+    if (!seen[key]) {
+      seen[key] = true
+      return true
+    }
+    return false
+  })
+}
+
+export function GenerateToken(length: number = 32): string {
+  const buffer = new Uint8Array(length)
+  for (let i = 0; i < length; i++) {
+    buffer[i] = Math.floor(Math.random() * 256)
+  }
+  return Array.from(buffer).map(byte => byte.toString(16).padStart(2, '0')).join('')
+}
+
+export function Delay(ms: number): Promise<void> {
+  return new Promise((resolve) => setTimeout(resolve, ms))
 }

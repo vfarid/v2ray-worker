@@ -6,6 +6,7 @@
 
 import { VlessOverWSHandler } from "./vless"
 import { GetPanel, PostPanel } from "./panel"
+import { GetLogin, PostLogin } from "./auth"
 import { GetConfigList } from "./collector"
 import { ToYamlSubscription } from "./clash"
 import { ToBase64Subscription } from "./sub"
@@ -15,25 +16,30 @@ export default {
   async fetch(request: Request, env: Env): Promise<Response> {
     const url: URL = new URL(request.url)
     const path: string = url.pathname.replace(/^\/|\/$/g, "")
-    const outputType = path.toLowerCase()
-    if (["sub", "clash"].includes(outputType)) {
+    const lcPath = path.toLowerCase()
+    if (["sub", "clash"].includes(lcPath)) {
       const configList: Array<Config> = await GetConfigList(url, env)
       // console.log(JSON.stringify(configList))
-      if (outputType == 'clash') {
+      if (lcPath == 'clash') {
         return new Response(ToYamlSubscription(configList));
       } else {
         return new Response(ToBase64Subscription(configList));
       }
-    } else if (outputType == 'vless-ws') {
+    } else if (lcPath == 'vless-ws') {
       return VlessOverWSHandler(request, env);
+    } else if (lcPath) {
+      if (request.method === 'GET') {
+        return GetLogin(request, env)
+      } else if (request.method === 'POST') {
+        return PostLogin(request, env)
+      }
     } else if (path) {
       return fetch(new Request(new URL("https://" + path), request))
     } else if (request.method === 'GET') {
       return GetPanel(request, env)
     } else if (request.method === 'POST') {
       return PostPanel(request, env)
-    } else {
-      return new Response('Invalid request!');
     }
+    return new Response('Invalid request!');
   }
 }

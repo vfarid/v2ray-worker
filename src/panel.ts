@@ -1,12 +1,19 @@
+import * as bcrypt from 'bcryptjs'
 import { v4 as uuidv4 } from "uuid"
-import { IsValidUUID } from "./helpers"
+import { IsValidUUID, GenerateToken } from "./helpers"
 import { defaultProviders, defaultProtocols, defaultALPNList, defaultPFList } from "./variables"
-
-interface Env {settings: any}
+import { Env } from "./interfaces"
 
 export async function GetPanel(request: Request, env: Env): Promise<Response> {
   const url: URL = new URL(request.url)
   try {
+    const hash: string | null = await env.settings.get("Password")
+    const token: string | null = await env.settings.get("Token")
+
+    if (hash && url.searchParams.get("token") != token) {
+      return Response.redirect(`${url.protocol}//${url.hostname}${url.port != "443" ? ":" + url.port : ""}/login`, 302)
+    }
+
     const maxConfigs: number = parseInt(await env.settings.get("MaxConfigs") || "200")
     const protocols: Array<string> = (await env.settings.get("Protocols"))?.split("\n") || defaultProtocols
     const alpnList: Array<string> = (await env.settings.get("ALPNs"))?.split("\n") || defaultALPNList
@@ -30,6 +37,32 @@ export async function GetPanel(request: Request, env: Env): Promise<Response> {
       htmlMessage = `<div class="p-3 bg-danger text-white fw-bold text-center">Failed to save settings! / خطا در ذخیره‌ی تنظیمات!</div>`
     }
 
+    var passwordSection = ""
+    if (hash) {
+      passwordSection = `
+      <div class="mb-3 p-3">
+        <button type="submit" name="reset_password" value="1" class="btn btn-danger">Remove Password / حذف کلمه عبور</button>
+      </div>
+      `
+    } else {
+      passwordSection = `
+      <div class="mb-3 p-3 bg-warning">
+        <label for="password" class="form-label fw-bold">
+          Enter password, if you want to protect panel / در صورتی که میخواهید از پنل محافظت کنید، یک کلمه‌ی عبور وارد کنید:
+        </label>
+        <input type="password" name="password" class="form-control" id="password" minlength="6"/>
+        <div class="form-text">
+          Minimum 6 chars / حداقل ۶ کاراکتر وارد کنید.
+        </div>
+        <p></p>
+        <label for="password-confirmation" class="form-label fw-bold">
+          Confirm your password / کلمه عبور را مجددا وارد کنید:
+        </label>
+        <input type="password" name="password_confirmation" class="form-control" id="password-confirmation" minlength="6"/>
+      </div>
+      `
+    }
+
     var htmlContent  = `
     <!DOCTYPE html>
     <html>
@@ -47,7 +80,7 @@ export async function GetPanel(request: Request, env: Env): Promise<Response> {
           </div>
         </div>
         ${htmlMessage}
-        <div class="px-5 py-2 bg-light">
+        <div class="px-4 py-2 bg-light">
           <label for="sub-link" class="form-label fw-bold">
             Your subscription link for v2ray clients/ <span dir="rtl">لینک ثبت نام شما برای کلاینت‌های v2ray</span>
             (v2rayN, v2rayNG, v2rayA, Matsuri, Nekobox, Nekoray...)
@@ -55,7 +88,7 @@ export async function GetPanel(request: Request, env: Env): Promise<Response> {
           <input id="sub-link" readonly value="https://${url.hostname}/sub" class="p-1" style="width: calc(100% - 150px)">
           <button onclick="var tmp=document.getElementById('sub-link');tmp.select();tmp.setSelectionRange(0,99999);navigator.clipboard.writeText(tmp.value)" class="btn btn-primary p-1 mb-1">Copy</button>
         </div>
-        <div class="px-5 py-2 bg-light">
+        <div class="px-4 py-2 bg-light">
           <label for="clash-link" class="form-label fw-bold">
             Your subscription link for clash clients/ <span dir="rtl">لینک ثبت نام شما برای کلاینت‌های کلش</span>
             (Clash, ClashX, ClashMeta...)
@@ -63,8 +96,8 @@ export async function GetPanel(request: Request, env: Env): Promise<Response> {
           <input id="clash-link" readonly value="https://${url.hostname}/clash" class="p-1" style="width: calc(100% - 150px)">
           <button onclick="var tmp=document.getElementById('clash-link');tmp.select();tmp.setSelectionRange(0,99999);navigator.clipboard.writeText(tmp.value)" class="btn btn-primary p-1 mb-1">Copy</button>
         </div>
-        <form class="px-5 py-4 border-top" method="post">
-          <div class="mb-3 pb-2">
+        <form class="px-4 py-4 border-top" method="post">
+          <div class="mb-3 p-3">
             <label for="includes" class="form-label fw-bold">
               Merged and original configs / کانفیگ‌های اصلی و ترکیبی:
             </label>
@@ -79,14 +112,14 @@ export async function GetPanel(request: Request, env: Env): Promise<Response> {
               </div>
             </div>
           </div>
-          <div class="mb-3 pb-2">
+          <div class="mb-3 p-3">
             <label for="max-configs" class="form-label fw-bold">
               Max. mumber of configs / حداکثر تعداد کانفیگ:
             </label>
             <input type="number" name="max" class="form-control" id="max-configs" value="${maxConfigs}" min="5"/>
             <div class="form-text"></div>
           </div>
-          <div class="mb-3 pb-2">
+          <div class="mb-3 p-3">
             <label for="type" class="form-label fw-bold">
               Protocols / پروتکل‌ها:
             </label>
@@ -109,7 +142,7 @@ export async function GetPanel(request: Request, env: Env): Promise<Response> {
               </div>
             </div>
           </div>
-          <div class="mb-3 pb-2">
+          <div class="mb-3 p-3">
             <label for="clean-ip" class="form-label fw-bold">
               Clean IP or clean subdomain / آی‌پی تمیز یا ساب‌دامین آی‌پی تمیز
             </label>
@@ -118,7 +151,7 @@ export async function GetPanel(request: Request, env: Env): Promise<Response> {
               One IP or subdomain per line. / در هر سطر یک آی‌پی یا ساب‌دامین وارد کنید.
             </div>
           </div>
-          <div class="mb-3 pb-2">
+          <div class="mb-3 p-3">
             <label for="alpn-list" class="form-label fw-bold">
               ALPN List:
             </label>
@@ -127,7 +160,7 @@ export async function GetPanel(request: Request, env: Env): Promise<Response> {
               One item per line. / در هر سطر یک آیتم وارد کنید.
             </div>
           </div>
-          <div class="mb-3 pb-2">
+          <div class="mb-3 p-3">
             <label for="pf-list" class="form-label fw-bold">
               FingerPrint List:
             </label>
@@ -136,7 +169,7 @@ export async function GetPanel(request: Request, env: Env): Promise<Response> {
               One item per line. / در هر سطر یک آیتم وارد کنید.
             </div>
           </div>
-          <div class="mb-3 pb-2">
+          <div class="mb-3 p-3">
             <label for="providers" class="form-label fw-bold">
               Providers / تامین کنندگان:
             </label>
@@ -145,7 +178,7 @@ export async function GetPanel(request: Request, env: Env): Promise<Response> {
               One link per line. / در هر سطر یک لینک وارد کنید. (Accepts base64, yaml, raw)
             </div>
           </div>
-          <div class="mb-3 pb-2">
+          <div class="mb-3 p-3">
             <label for="configs" class="form-label fw-bold">
               Personal configs / کانفیگ‌های شخصی:
             </label>
@@ -154,8 +187,9 @@ export async function GetPanel(request: Request, env: Env): Promise<Response> {
               One config per line. / در هر سطر یک کانفیگ وارد کنید.
             </div>
           </div>
+          ${passwordSection}
           <button type="submit" name="save" value="save" class="btn btn-primary">Save / ذخیره</button>
-          <button type="submit" name="reset" value="reset" class="btn btn-danger">Reset / بازنشانی</button>
+          <button type="submit" name="reset" value="reset" class="btn btn-warning">Reset / بازنشانی</button>
         </form>
       </div>
     </body>
@@ -163,8 +197,8 @@ export async function GetPanel(request: Request, env: Env): Promise<Response> {
     `
   
     return new Response(htmlContent, {
-      headers: {'Content-Type': 'text/html'},
-    });
+      headers: {"Content-Type": "text/html"},
+    })
   } catch (e) {
     const htmlContent = `
     <!DOCTYPE html>
@@ -212,23 +246,47 @@ export async function GetPanel(request: Request, env: Env): Promise<Response> {
     `
 
     return new Response(htmlContent, {
-      headers: {'Content-Type': 'text/html'},
-    });
+      headers: {"Content-Type": "text/html"},
+    })
   }
 }
 
 export async function PostPanel(request: Request, env: Env): Promise<Response> {
   const url: URL = new URL(request.url)
+  var token: string | null = await env.settings.get("Token")
   try {
-    const formData = await request.formData();
-    if (formData.get("save")) {
+    const formData = await request.formData()
+
+    var hashedPassword: string | null = await env.settings.get("Password")
+
+    if (hashedPassword && url.searchParams.get("token") != token) {
+      return Response.redirect(`${url.protocol}//${url.hostname}${url.port != "443" ? ":" + url.port : ""}/login`, 302)
+    }
+
+    if (formData.get("reset_password")) {
+      await env.settings.delete("Password")
+      await env.settings.delete("Token")
+      return Response.redirect(`${url.protocol}//${url.hostname}${url.port != "443" ? ":" + url.port : ""}?message=success`, 302)
+    } else if (formData.get("save")) {
+      const password: string | null = formData.get("password")
+      if (password) {
+        if (password.length < 6 || password !== formData.get("password_confirmation")) {
+          return Response.redirect(`${url.protocol}//${url.hostname}${url.port != "443" ? ":" + url.port : ""}?message=invalid-password`, 302)
+        }
+        hashedPassword = await bcrypt.hash(password, 10);
+
+        token = GenerateToken(24)
+        await env.settings.put("Password", hashedPassword)
+        await env.settings.put("Token", token)
+      }
+      
       await env.settings.put("MaxConfigs", formData.get("max") || "200")
       await env.settings.put("Protocols", formData.getAll("protocols")?.join("\n").trim())
-      await env.settings.put("ALPNs", formData.get("alpn_list")?.trim().split("\n").map(str => str.trim()).join("\n"))
-      await env.settings.put("FingerPrints", formData.get("fp_list")?.trim().split("\n").map(str => str.trim()).join("\n"))
-      await env.settings.put("Providers", formData.get("providers")?.trim().split("\n").map(str => str.trim()).join("\n"))
-      await env.settings.put("CleanDomainIPs", formData.get("clean_ips")?.trim().split("\n").map(str => str.trim()).join("\n"))
-      await env.settings.put("Configs", formData.get("configs")?.trim().split("\n").map(str => str.trim()).join("\n"))
+      await env.settings.put("ALPNs", formData.get("alpn_list")?.trim().split("\n").map(str => str.trim()).join("\n") || "")
+      await env.settings.put("FingerPrints", formData.get("fp_list")?.trim().split("\n").map(str => str.trim()).join("\n") || "")
+      await env.settings.put("Providers", formData.get("providers")?.trim().split("\n").map(str => str.trim()).join("\n") || "")
+      await env.settings.put("CleanDomainIPs", formData.get("clean_ips")?.trim().split("\n").map(str => str.trim()).join("\n") || "")
+      await env.settings.put("Configs", formData.get("configs")?.trim().split("\n").map(str => str.trim()).join("\n") || "")
       await env.settings.put("IncludeOriginalConfigs", formData.get("original") || "no")
       await env.settings.put("IncludeMergedConfigs", formData.get("merged") || "no")
     } else {
@@ -242,10 +300,12 @@ export async function PostPanel(request: Request, env: Env): Promise<Response> {
       await env.settings.delete("IncludeOriginalConfigs")
       await env.settings.delete("IncludeMergedConfigs")
       await env.settings.delete("UUID")
+      await env.settings.delete("Password")
+      await env.settings.delete("Token")
     }
 
-    return Response.redirect(`https://${url.hostname}?message=success`, 302);
+    return Response.redirect(`${url.protocol}//${url.hostname}${url.port != "443" ? ":" + url.port : ""}?message=success${token ? "&token=" + token : ""}`, 302)
   } catch (e) {
-    return Response.redirect(`https://${url.hostname}?message=error`, 302);
+    return Response.redirect(`${url.protocol}//${url.hostname}${url.port != "443" ? ":" + url.port : ""}?message=error${token ? "&token=" + token : ""}`, 302)
   }
 }

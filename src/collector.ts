@@ -2,7 +2,7 @@ import yaml from 'js-yaml'
 import { Buffer } from 'buffer'
 import { GetVlessConfigList } from './vless'
 import { MixConfig, ValidateConfig, DecodeConfig } from "./config"
-import { GetMultipleRandomElements, GetVlessConfig, IsBase64 } from "./helpers"
+import { GetMultipleRandomElements, RemoveDuplicateConfigs, IsBase64 } from "./helpers"
 import { defaultProviders, defaultProtocols, defaultALPNList, defaultPFList } from "./variables"
 import { Env, Config } from "./interfaces"
 
@@ -164,5 +164,5 @@ export async function GetConfigList(url: URL, env: Env): Promise<Array<Config>> 
     })
   }
 
-  return finalConfigList
+  return RemoveDuplicateConfigs(finalConfigList)
 }
