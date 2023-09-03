@@ -9,9 +9,9 @@ jobs:
     timeout-minutes: 60
     steps:
       - uses: actions/checkout@v2
+      - run: npm i
       - name: Build & Deploy Worker
         uses: cloudflare/wrangler-action@2.0.0
         with:
           apiToken: ${{ secrets.CF_API_TOKEN }}
           accountId: ${{ secrets.CF_ACCOUNT_ID }}
-      - run: npm i
