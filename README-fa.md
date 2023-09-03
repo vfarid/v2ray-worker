@@ -23,4 +23,4 @@
 اکنون میتوانید آدس ورکر خود را در بروزر وارد کرده و پنل کنترل را مشاهده کنید. راهنمای استفاده روی پنل کنترل وجود دارد.
 
 ### Credits
-Built-in vless config generator is based on [Zizifn Edge Tunnel](https://github.com/zizifn/edgetunnel), re-writed using Typescript.
+Built-in vless config generator is based on [Zizifn Edge Tunnel](https://github.com/zizifn/edgetunnel), re-written using Typescript.
