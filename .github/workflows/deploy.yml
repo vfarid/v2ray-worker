@@ -7,9 +7,10 @@ jobs:
   deploy:
     runs-on: ubuntu-latest
     timeout-minutes: 60
-    needs: test
     steps:
       - uses: actions/checkout@v2
+      - run: npm i
+      - run: sed -i s/KV_NAME/${{ secrets.KV_NAME }}/g wrangler.toml
       - name: Build & Deploy Worker
         uses: cloudflare/wrangler-action@2.0.0
         with:
