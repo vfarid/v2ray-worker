@@ -1,4 +1,5 @@
 export const defaultProviders: Array<string> = [
+	"https://raw.githubusercontent.com/Leon406/SubCrawler/master/sub/share/vless",
   "https://raw.githubusercontent.com/mfuu/v2ray/master/clash.yaml",
   "https://raw.githubusercontent.com/peasoft/NoMoreWalls/master/list.yml",
   "https://raw.githubusercontent.com/a2470982985/getNode/main/clash.yaml",
