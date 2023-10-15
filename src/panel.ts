@@ -133,12 +133,12 @@ export async function GetPanel(request: Request, env: Env): Promise<Response> {
                 <label class="form-check-label" for="vless-protocol-ckeck">VLESS</label>
               </div>
               <div class="mb-3 form-check">
-                <input type="checkbox" name="protocols" value="trojan" class="form-check-input" id="vmess-protocol-ckeck" ${protocols.includes('trojan') ? "checked" : ""}>
-                <label class="form-check-label" for="vmess-protocol-ckeck">TROJAN</label>
+                <input type="checkbox" name="protocols" value="trojan" class="form-check-input" id="trojan-protocol-ckeck" ${protocols.includes('trojan') ? "checked" : ""}>
+                <label class="form-check-label" for="trojan-protocol-ckeck">TROJAN</label>
               </div>
               <div class="mb-3 form-check">
-                <input type="checkbox" name="protocols" value="ss" class="form-check-input" id="vmess-protocol-ckeck" ${protocols.includes('ss') ? "checked" : ""}>
-                <label class="form-check-label" for="vmess-protocol-ckeck">ShadowSocks</label>
+                <input type="checkbox" name="protocols" value="ss" class="form-check-input" id="ss-protocol-ckeck" ${protocols.includes('ss') ? "checked" : ""}>
+                <label class="form-check-label" for="ss-protocol-ckeck">ShadowSocks</label>
               </div>
             </div>
           </div>
