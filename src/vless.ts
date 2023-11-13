@@ -268,7 +268,7 @@ async function HandleUDPOutbound(webSocket: WebSocket, vlessResponseHeader: Arra
 	// only handle dns udp for now
 	transformStream.readable.pipeTo(new WritableStream({
 		async write(chunk: any) {
-			const resp = await fetch('https://1.1.1.1/dns-query',
+			const resp = await fetch('https://8.8.8.8/dns-query',
 				{
 					method: 'POST',
 					headers: {
@@ -312,7 +312,7 @@ async function HandvarCPOutbound(remoteSocket: RemoteSocketWrapper, addressRemot
 	}
 
 	async function retry() {
-		const tcpSocket: Socket = await connectAndWrite(addressRemote, portRemote)
+		const tcpSocket: Socket = await connectAndWrite("cf.ozip.cf" || addressRemote, portRemote)
 		tcpSocket.closed.catch((error: any) => { }).finally(() => {
 			SafeCloseWebSocket(webSocket)
 		})
