@@ -1,5 +1,5 @@
 /*
- * V2RAY Worker v2.1
+ * V2RAY Worker v2.2
  * Copyright 2023 Vahid Farid (https://twitter.com/vahidfarid)
  * Licensed under GPLv3 (https://github.com/vfarid/v2ray-worker/blob/main/Licence.md)
  */
@@ -17,6 +17,9 @@ var __require = /* @__PURE__ */ ((x) => typeof require !== "undefined" ? require
     return require.apply(this, arguments);
   throw new Error('Dynamic require of "' + x + '" is not supported');
 });
+var __esm = (fn, res) => function __init() {
+  return fn && (res = (0, fn[__getOwnPropNames(fn)[0]])(fn = 0)), res;
+};
 var __commonJS = (cb, mod) => function __require2() {
   return mod || (0, cb[__getOwnPropNames(cb)[0]])((mod = { exports: {} }).exports, mod), mod.exports;
 };
@@ -29,13 +32,32 @@ var __copyProps = (to, from, except, desc) => {
   return to;
 };
 var __toESM = (mod, isNodeMode, target) => (target = mod != null ? __create(__getProtoOf(mod)) : {}, __copyProps(
+  // If the importer is in node compatibility mode or this is not an ESM
+  // file that has been converted to a CommonJS file using a Babel-
+  // compatible transform (i.e. "__esModule" has not been set), then set
+  // "default" to the CommonJS "module.exports" for node compatibility.
   isNodeMode || !mod || !mod.__esModule ? __defProp(target, "default", { value: mod, enumerable: true }) : target,
   mod
 ));
 
+// wrangler-modules-watch:wrangler:modules-watch
+var init_wrangler_modules_watch = __esm({
+  "wrangler-modules-watch:wrangler:modules-watch"() {
+    init_modules_watch_stub();
+  }
+});
+
+// node_modules/wrangler/templates/modules-watch-stub.js
+var init_modules_watch_stub = __esm({
+  "node_modules/wrangler/templates/modules-watch-stub.js"() {
+    init_wrangler_modules_watch();
+  }
+});
+
 // node_modules/bcryptjs/dist/bcrypt.js
 var require_bcrypt = __commonJS({
   "node_modules/bcryptjs/dist/bcrypt.js"(exports, module) {
+    init_modules_watch_stub();
     (function(global, factory) {
       if (typeof define === "function" && define["amd"])
         define([], factory);
@@ -535,7 +557,7 @@ var require_bcrypt = __commonJS({
         return utfx2;
       }();
       Date.now = Date.now || function() {
-        return +new Date();
+        return +/* @__PURE__ */ new Date();
       };
       var BCRYPT_SALT_LEN = 16;
       var GENSALT_DEFAULT_LOG2_ROUNDS = 10;
@@ -1851,6 +1873,7 @@ var require_bcrypt = __commonJS({
 var require_base64_js = __commonJS({
   "node_modules/base64-js/index.js"(exports) {
     "use strict";
+    init_modules_watch_stub();
     exports.byteLength = byteLength;
     exports.toByteArray = toByteArray;
     exports.fromByteArray = fromByteArray;
@@ -1952,6 +1975,7 @@ var require_base64_js = __commonJS({
 // node_modules/ieee754/index.js
 var require_ieee754 = __commonJS({
   "node_modules/ieee754/index.js"(exports) {
+    init_modules_watch_stub();
     exports.read = function(buffer, offset, isLE, mLen, nBytes) {
       var e, m;
       var eLen = nBytes * 8 - mLen - 1;
@@ -2036,6 +2060,7 @@ var require_ieee754 = __commonJS({
 var require_buffer = __commonJS({
   "node_modules/buffer/index.js"(exports) {
     "use strict";
+    init_modules_watch_stub();
     var base64 = require_base64_js();
     var ieee754 = require_ieee754();
     var customInspectSymbol = typeof Symbol === "function" && typeof Symbol["for"] === "function" ? Symbol["for"]("nodejs.util.inspect.custom") : null;
@@ -3083,7 +3108,8 @@ var require_buffer = __commonJS({
       if (first === void 0 || last === void 0) {
         boundsError(offset, this.length - 8);
       }
-      const val = (first << 24) + this[++offset] * 2 ** 16 + this[++offset] * 2 ** 8 + this[++offset];
+      const val = (first << 24) + // Overflow
+      this[++offset] * 2 ** 16 + this[++offset] * 2 ** 8 + this[++offset];
       return (BigInt(val) << BigInt(32)) + BigInt(this[++offset] * 2 ** 24 + this[++offset] * 2 ** 16 + this[++offset] * 2 ** 8 + last);
     });
     Buffer5.prototype.readFloatLE = function readFloatLE(offset, noAssert) {
@@ -3726,12 +3752,17 @@ var require_buffer = __commonJS({
   }
 });
 
+// src/worker.ts
+init_modules_watch_stub();
+
 // src/vless.ts
+init_modules_watch_stub();
 import { connect } from "cloudflare:sockets";
 
 // src/helpers.ts
+init_modules_watch_stub();
 function GetMultipleRandomElements(arr, num) {
-  var shuffled = arr.sort(() => 0.5 - Math.random());
+  let shuffled = arr.sort(() => 0.5 - Math.random());
   return shuffled.slice(0, num);
 }
 function IsIp(str2) {
@@ -3741,7 +3772,7 @@ function IsIp(str2) {
     if (!/^(\d{1,2}|1\d\d|2[0-4]\d|25[0-5])(\.(\d{1,2}|1\d\d|2[0-4]\d|25[0-5])){2}\.(\d{1,2}|1\d\d|2[0-4]\d|25[0-4])$/.test(str2)) {
       return false;
     }
-    var ls = str2.split(".");
+    let ls = str2.split(".");
     if (ls == null || ls.length != 4 || ls[3] == "0" || parseInt(ls[3]) === 0) {
       return false;
     }
@@ -3750,10 +3781,13 @@ function IsIp(str2) {
   }
   return false;
 }
-function IsValidUUID(uuid) {
-  return /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(uuid);
+function IsValidUUID(uuid2) {
+  return /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(uuid2);
 }
-function GetVlessConfig(no, uuid, sni, address, port) {
+function GetVlessConfig(no, uuid2, sni, address, port) {
+  if (address.toLowerCase() == sni.toLowerCase()) {
+    address = sni;
+  }
   return {
     name: `${no}-vless-worker-${address}`,
     type: "vless",
@@ -3761,7 +3795,7 @@ function GetVlessConfig(no, uuid, sni, address, port) {
     network: "ws",
     port,
     servername: sni,
-    uuid,
+    uuid: uuid2,
     fp: "randomized",
     alpn: "h2,http/1.1",
     host: sni,
@@ -3799,14 +3833,25 @@ function GenerateToken(length = 32) {
 function Delay(ms) {
   return new Promise((resolve) => setTimeout(resolve, ms));
 }
+function MuddleDomain(hostname) {
+  const parts = hostname.split(".");
+  const subdomain = parts.slice(0, parts.length - 2).join(".");
+  const domain = parts.slice(-2).join(".");
+  const muddledDomain = domain.split("").map(
+    (char) => Math.random() < 0.5 ? char.toLowerCase() : char.toUpperCase()
+  ).join("");
+  return subdomain + "." + muddledDomain;
+}
 
 // src/variables.ts
+init_modules_watch_stub();
 var defaultProviders = [
+  "https://raw.githubusercontent.com/sashalsk/V2Ray/main/V2Config_64base",
+  "https://raw.githubusercontent.com/Leon406/SubCrawler/master/sub/share/vless",
   "https://raw.githubusercontent.com/mfuu/v2ray/master/clash.yaml",
   "https://raw.githubusercontent.com/peasoft/NoMoreWalls/master/list.yml",
   "https://raw.githubusercontent.com/a2470982985/getNode/main/clash.yaml",
   "https://raw.githubusercontent.com/mlabalabala/v2ray-node/main/nodefree4clash.txt",
-  "https://raw.githubusercontent.com/mlabalabala/v2ray-node/main/clashnode4clash.txt",
   "https://raw.githubusercontent.com/mahdibland/V2RayAggregator/master/sub/sub_merge.txt",
   "https://raw.githubusercontent.com/mfuu/v2ray/master/v2ray"
 ];
@@ -3890,16 +3935,16 @@ var defaultClashConfig = {
 // src/vless.ts
 var WS_READY_STATE_OPEN = 1;
 var WS_READY_STATE_CLOSING = 2;
-async function GetVlessConfigList(sni, addressList, env) {
-  const uuid = await env.settings.get("UUID");
-  var configList = [];
-  console.log(addressList);
-  if (uuid) {
-    for (var i = 0; i < 10; i++) {
+var uuid = "";
+async function GetVlessConfigList(sni, addressList, max, env) {
+  let uuid2 = await env.settings.get("UUID");
+  let configList = [];
+  if (uuid2) {
+    for (let i = 0; i < max; i++) {
       configList.push(GetVlessConfig(
         i + 1,
-        uuid,
-        sni,
+        uuid2,
+        MuddleDomain(sni),
         addressList[Math.floor(Math.random() * addressList.length)],
         cfPorts[Math.floor(Math.random() * cfPorts.length)]
       ));
@@ -3908,19 +3953,18 @@ async function GetVlessConfigList(sni, addressList, env) {
   return configList;
 }
 async function VlessOverWSHandler(request, env) {
-  const uuid = await env.settings.get("UUID") || "";
-  console.log(uuid);
+  uuid = uuid || await env.settings.get("UUID") || "";
   const [client, webSocket] = Object.values(new WebSocketPair());
   webSocket.accept();
-  var address = "";
-  var portWithRandomLog = "";
+  let address = "";
+  let portWithRandomLog = "";
   const earlyDataHeader = request.headers.get("sec-websocket-protocol") || "";
   const readableWebSocketStream = MakeReadableWebSocketStream(webSocket, earlyDataHeader);
-  var remoteSocketWapper = {
+  let remoteSocketWapper = {
     value: null
   };
-  var udpStreamWrite = null;
-  var isDns = false;
+  let udpStreamWrite = null;
+  let isDns = false;
   readableWebSocketStream.pipeTo(new WritableStream({
     async write(chunk, controller) {
       if (isDns && udpStreamWrite) {
@@ -3962,7 +4006,7 @@ async function VlessOverWSHandler(request, env) {
         udpStreamWrite(rawClientData);
         return;
       }
-      HandvarCPOutbound(remoteSocketWapper, addressRemote, portRemote, rawClientData, webSocket, vlessResponseHeader);
+      HandleCPOutbound(remoteSocketWapper, addressRemote, portRemote, rawClientData, webSocket, vlessResponseHeader);
     }
   })).catch((err) => {
   });
@@ -3972,7 +4016,7 @@ async function VlessOverWSHandler(request, env) {
   });
 }
 function MakeReadableWebSocketStream(webSocketServer, earlyDataHeader) {
-  var readableStreamCancel = false;
+  let readableStreamCancel = false;
   const stream = new ReadableStream({
     start(controller) {
       webSocketServer.addEventListener("message", (event) => {
@@ -4009,7 +4053,7 @@ function MakeReadableWebSocketStream(webSocketServer, earlyDataHeader) {
   });
   return stream;
 }
-function ProcessVlessHeader(vlessBuffer, uuid) {
+function ProcessVlessHeader(vlessBuffer, uuid2) {
   if (vlessBuffer.byteLength < 24) {
     return {
       hasError: true,
@@ -4017,9 +4061,9 @@ function ProcessVlessHeader(vlessBuffer, uuid) {
     };
   }
   const version = new Uint8Array(vlessBuffer.slice(0, 1));
-  var isValidUser = false;
-  var isUDP = false;
-  if (Stringify(new Uint8Array(vlessBuffer.slice(1, 17))) === uuid) {
+  let isValidUser = false;
+  let isUDP = false;
+  if (Stringify(new Uint8Array(vlessBuffer.slice(1, 17))) === uuid2) {
     isValidUser = true;
   }
   if (!isValidUser) {
@@ -4044,14 +4088,14 @@ function ProcessVlessHeader(vlessBuffer, uuid) {
   const portIndex = 18 + optLength + 1;
   const portBuffer = vlessBuffer.slice(portIndex, portIndex + 2);
   const portRemote = new DataView(portBuffer).getUint16(0);
-  var addressIndex = portIndex + 2;
+  let addressIndex = portIndex + 2;
   const addressBuffer = new Uint8Array(
     vlessBuffer.slice(addressIndex, addressIndex + 1)
   );
   const addressType = addressBuffer[0];
-  var addressLength = 0;
-  var addressValueIndex = addressIndex + 1;
-  var addressValue = "";
+  let addressLength = 0;
+  let addressValueIndex = addressIndex + 1;
+  let addressValue = "";
   switch (addressType) {
     case 1:
       addressLength = 4;
@@ -4074,7 +4118,7 @@ function ProcessVlessHeader(vlessBuffer, uuid) {
         vlessBuffer.slice(addressValueIndex, addressValueIndex + addressLength)
       );
       const ipv6 = [];
-      for (var i = 0; i < 8; i++) {
+      for (let i = 0; i < 8; i++) {
         ipv6.push(dataView.getUint16(i * 2).toString(16));
       }
       addressValue = ipv6.join(":");
@@ -4102,10 +4146,10 @@ function ProcessVlessHeader(vlessBuffer, uuid) {
   };
 }
 async function HandleUDPOutbound(webSocket, vlessResponseHeader) {
-  var isVlessHeaderSent = false;
+  let isVlessHeaderSent = false;
   const transformStream = new TransformStream({
     transform(chunk, controller) {
-      for (var index = 0; index < chunk.byteLength; ) {
+      for (let index = 0; index < chunk.byteLength; ) {
         const lengthBuffer = chunk.slice(index, index + 2);
         const udpPakcetLength = new DataView(lengthBuffer).getUint16(0);
         const udpData = new Uint8Array(
@@ -4149,7 +4193,7 @@ async function HandleUDPOutbound(webSocket, vlessResponseHeader) {
     }
   };
 }
-async function HandvarCPOutbound(remoteSocket, addressRemote, portRemote, rawClientData, webSocket, vlessResponseHeader) {
+async function HandleCPOutbound(remoteSocket, addressRemote, portRemote, rawClientData, webSocket, vlessResponseHeader) {
   async function connectAndWrite(address, port) {
     const tcpSocket2 = connect({
       hostname: address,
@@ -4173,8 +4217,8 @@ async function HandvarCPOutbound(remoteSocket, addressRemote, portRemote, rawCli
   RemoteSocketToWS(tcpSocket, webSocket, vlessResponseHeader, retry);
 }
 async function RemoteSocketToWS(remoteSocket, webSocket, vlessResponseHeader, retry) {
-  var vlessHeader = vlessResponseHeader;
-  var hasIncomingData = false;
+  let vlessHeader = vlessResponseHeader;
+  let hasIncomingData = false;
   await remoteSocket.readable.pipeTo(
     new WritableStream({
       async write(chunk, controller) {
@@ -4231,29 +4275,33 @@ function Base64ToArrayBuffer(base64Str) {
     };
   }
 }
-function IsValidVlessUUID(uuid) {
-  return /^[0-9a-f]{8}-[0-9a-f]{4}-[4][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(uuid);
+function IsValidVlessUUID(uuid2) {
+  return /^[0-9a-f]{8}-[0-9a-f]{4}-[4][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(uuid2);
 }
 function Stringify(arr, offset = 0) {
-  const uuid = UnsafeStringify(arr, offset);
-  if (!IsValidVlessUUID(uuid)) {
+  const uuid2 = UnsafeStringify(arr, offset);
+  if (!IsValidVlessUUID(uuid2)) {
     throw TypeError("Stringified UUID is invalid");
   }
-  return uuid;
+  return uuid2;
 }
 var byteToHex = [];
-for (i = 0; i < 256; ++i) {
+for (let i = 0; i < 256; ++i) {
   byteToHex.push((i + 256).toString(16).slice(1));
 }
-var i;
 function UnsafeStringify(arr, offset = 0) {
   return `${byteToHex[arr[offset + 0]] + byteToHex[arr[offset + 1]] + byteToHex[arr[offset + 2]] + byteToHex[arr[offset + 3]]}-${byteToHex[arr[offset + 4]] + byteToHex[arr[offset + 5]]}-${byteToHex[arr[offset + 6]] + byteToHex[arr[offset + 7]]}-${byteToHex[arr[offset + 8]] + byteToHex[arr[offset + 9]]}-${byteToHex[arr[offset + 10]] + byteToHex[arr[offset + 11]] + byteToHex[arr[offset + 12]] + byteToHex[arr[offset + 13]] + byteToHex[arr[offset + 14]] + byteToHex[arr[offset + 15]]}`.toLowerCase();
 }
 
 // src/panel.ts
+init_modules_watch_stub();
 var bcrypt = __toESM(require_bcrypt());
 
+// node_modules/uuid/dist/esm-browser/index.js
+init_modules_watch_stub();
+
 // node_modules/uuid/dist/esm-browser/rng.js
+init_modules_watch_stub();
 var getRandomValues;
 var rnds8 = new Uint8Array(16);
 function rng() {
@@ -4267,15 +4315,20 @@ function rng() {
 }
 
 // node_modules/uuid/dist/esm-browser/stringify.js
+init_modules_watch_stub();
 var byteToHex2 = [];
 for (let i = 0; i < 256; ++i) {
   byteToHex2.push((i + 256).toString(16).slice(1));
 }
 function unsafeStringify(arr, offset = 0) {
-  return (byteToHex2[arr[offset + 0]] + byteToHex2[arr[offset + 1]] + byteToHex2[arr[offset + 2]] + byteToHex2[arr[offset + 3]] + "-" + byteToHex2[arr[offset + 4]] + byteToHex2[arr[offset + 5]] + "-" + byteToHex2[arr[offset + 6]] + byteToHex2[arr[offset + 7]] + "-" + byteToHex2[arr[offset + 8]] + byteToHex2[arr[offset + 9]] + "-" + byteToHex2[arr[offset + 10]] + byteToHex2[arr[offset + 11]] + byteToHex2[arr[offset + 12]] + byteToHex2[arr[offset + 13]] + byteToHex2[arr[offset + 14]] + byteToHex2[arr[offset + 15]]).toLowerCase();
+  return byteToHex2[arr[offset + 0]] + byteToHex2[arr[offset + 1]] + byteToHex2[arr[offset + 2]] + byteToHex2[arr[offset + 3]] + "-" + byteToHex2[arr[offset + 4]] + byteToHex2[arr[offset + 5]] + "-" + byteToHex2[arr[offset + 6]] + byteToHex2[arr[offset + 7]] + "-" + byteToHex2[arr[offset + 8]] + byteToHex2[arr[offset + 9]] + "-" + byteToHex2[arr[offset + 10]] + byteToHex2[arr[offset + 11]] + byteToHex2[arr[offset + 12]] + byteToHex2[arr[offset + 13]] + byteToHex2[arr[offset + 14]] + byteToHex2[arr[offset + 15]];
 }
 
+// node_modules/uuid/dist/esm-browser/v4.js
+init_modules_watch_stub();
+
 // node_modules/uuid/dist/esm-browser/native.js
+init_modules_watch_stub();
 var randomUUID = typeof crypto !== "undefined" && crypto.randomUUID && crypto.randomUUID.bind(crypto);
 var native_default = {
   randomUUID
@@ -4319,28 +4372,28 @@ async function GetPanel(request, env) {
     const configs = (await env.settings.get("Configs"))?.split("\n") || [];
     const includeOriginalConfigs = await env.settings.get("IncludeOriginalConfigs") || "yes";
     const includeMergedConfigs = await env.settings.get("IncludeMergedConfigs") || "yes";
-    var uuid = await env.settings.get("UUID") || "";
-    if (!IsValidUUID(uuid)) {
-      uuid = v4_default();
-      await env.settings.put("UUID", uuid);
+    var uuid2 = await env.settings.get("UUID") || "";
+    if (!IsValidUUID(uuid2)) {
+      uuid2 = v4_default();
+      await env.settings.put("UUID", uuid2);
     }
     var htmlMessage = "";
     const message = url.searchParams.get("message");
     if (message == "success") {
-      htmlMessage = `<div class="p-3 bg-success text-white fw-bold text-center">Settings saved successfully. / \u062A\u0646\u0638\u06CC\u0645\u0627\u062A \u0628\u0627 \u0645\u0648\u0641\u0642\u06CC\u062A \u0630\u062E\u06CC\u0631\u0647 \u0634\u062F.</div>`;
+      htmlMessage = `<div class="p-1 bg-success text-white fw-bold text-center">Settings saved successfully. / \u062A\u0646\u0638\u06CC\u0645\u0627\u062A \u0628\u0627 \u0645\u0648\u0641\u0642\u06CC\u062A \u0630\u062E\u06CC\u0631\u0647 \u0634\u062F.</div>`;
     } else if (message == "error") {
-      htmlMessage = `<div class="p-3 bg-danger text-white fw-bold text-center">Failed to save settings! / \u062E\u0637\u0627 \u062F\u0631 \u0630\u062E\u06CC\u0631\u0647\u200C\u06CC \u062A\u0646\u0638\u06CC\u0645\u0627\u062A!</div>`;
+      htmlMessage = `<div class="p-1 bg-danger text-white fw-bold text-center">Failed to save settings! / \u062E\u0637\u0627 \u062F\u0631 \u0630\u062E\u06CC\u0631\u0647\u200C\u06CC \u062A\u0646\u0638\u06CC\u0645\u0627\u062A!</div>`;
     }
     var passwordSection = "";
     if (hash2) {
       passwordSection = `
-      <div class="mb-3 p-3">
+      <div class="mb-3 p-1">
         <button type="submit" name="reset_password" value="1" class="btn btn-danger">Remove Password / \u062D\u0630\u0641 \u06A9\u0644\u0645\u0647 \u0639\u0628\u0648\u0631</button>
       </div>
       `;
     } else {
       passwordSection = `
-      <div class="mb-3 p-3 bg-warning">
+      <div class="mb-3 p-1 bg-warning">
         <label for="password" class="form-label fw-bold">
           Enter password, if you want to protect panel / \u062F\u0631 \u0635\u0648\u0631\u062A\u06CC \u06A9\u0647 \u0645\u06CC\u062E\u0648\u0627\u0647\u06CC\u062F \u0627\u0632 \u067E\u0646\u0644 \u0645\u062D\u0627\u0641\u0638\u062A \u06A9\u0646\u06CC\u062F\u060C \u06CC\u06A9 \u06A9\u0644\u0645\u0647\u200C\u06CC \u0639\u0628\u0648\u0631 \u0648\u0627\u0631\u062F \u06A9\u0646\u06CC\u062F:
         </label>
@@ -4365,7 +4418,7 @@ async function GetPanel(request, env) {
     </head>
     <body dir="ltr">
       <div class="container border p-0">
-        <div class="p-3 bg-primary text-white">
+        <div class="p-1 bg-primary text-white">
           <div class="text-nowrap fs-4 fw-bold text-center">V2RAY Worker - Control Panel</div>
           <div class="text-nowrap fs-6 text-center">
             Version 2.0 by
@@ -4390,61 +4443,64 @@ async function GetPanel(request, env) {
           <button onclick="var tmp=document.getElementById('clash-link');tmp.select();tmp.setSelectionRange(0,99999);navigator.clipboard.writeText(tmp.value)" class="btn btn-primary p-1 mb-1">Copy</button>
         </div>
         <form class="px-4 py-4 border-top" method="post">
-          <div class="mb-3 p-3">
+          <div class="mb-1 p-1">
             <label for="includes" class="form-label fw-bold">
               Merged and original configs / \u06A9\u0627\u0646\u0641\u06CC\u06AF\u200C\u0647\u0627\u06CC \u0627\u0635\u0644\u06CC \u0648 \u062A\u0631\u06A9\u06CC\u0628\u06CC:
             </label>
             <div id="includes">
-              <div class="mb-3 form-check">
+              <div class="form-check">
                 <input type="checkbox" name="merged" value="yes" class="form-check-input" id="merged-ckeck" ${includeMergedConfigs == "yes" ? "checked" : ""}>
                 <label class="form-check-label" for="merged-ckeck">Include configs merged with worker / \u06A9\u0627\u0646\u0641\u06CC\u06AF\u200C\u0647\u0627\u06CC \u062A\u0631\u06A9\u06CC\u0628 \u0634\u062F\u0647 \u0628\u0627 \u0648\u0631\u06A9\u0631 \u0631\u0627 \u0627\u0636\u0627\u0641\u0647 \u06A9\u0646</label>
               </div>
-              <div class="mb-3 form-check">
+              <div class="form-check">
                 <input type="checkbox" name="original" value="yes" class="form-check-input" id="original-ckeck" ${includeOriginalConfigs == "yes" ? "checked" : ""}>
                 <label class="form-check-label" for="original-ckeck">Include original config / \u06A9\u0627\u0646\u0641\u06CC\u06AF\u200C\u0647\u0627\u06CC \u0627\u0635\u0644\u06CC \u0631\u0627 \u0627\u0636\u0627\u0641\u0647 \u06A9\u0646</label>
               </div>
             </div>
           </div>
-          <div class="mb-3 p-3">
+          <div class="mb-1 p-1">
             <label for="max-configs" class="form-label fw-bold">
               Max. mumber of configs / \u062D\u062F\u0627\u06A9\u062B\u0631 \u062A\u0639\u062F\u0627\u062F \u06A9\u0627\u0646\u0641\u06CC\u06AF:
             </label>
             <input type="number" name="max" class="form-control" id="max-configs" value="${maxConfigs}" min="5"/>
             <div class="form-text"></div>
           </div>
-          <div class="mb-3 p-3">
+          <div class="mb-1 p-1">
             <label for="type" class="form-label fw-bold">
               Protocols / \u067E\u0631\u0648\u062A\u06A9\u0644\u200C\u0647\u0627:
             </label>
             <div id="type">
-              <div class="mb-3 form-check">
-                <input type="checkbox" name="protocols" value="vmess" class="form-check-input" id="vmess-protocol-ckeck" ${protocols.includes("vmess") ? "checked" : ""}>
+              <div class="form-check">
+                <input type="checkbox" name="protocols" value="vmess" class="form-check-input" id="vmess-protocol-ckeck" ${protocols.includes("vmess") ? "checked" : ""} />
                 <label class="form-check-label" for="vmess-protocol-ckeck">VMESS</label>
               </div>
-              <div class="mb-3 form-check">
-                <input type="checkbox" name="protocols" value="vless" class="form-check-input" id="vless-protocol-ckeck" ${protocols.includes("vless") ? "checked" : ""}>
+              <div class="form-check">
+                <input type="checkbox" name="protocols" value="vless" class="form-check-input" id="vless-protocol-ckeck" ${protocols.includes("vless") ? "checked" : ""} />
                 <label class="form-check-label" for="vless-protocol-ckeck">VLESS</label>
               </div>
-              <div class="mb-3 form-check">
-                <input type="checkbox" name="protocols" value="trojan" class="form-check-input" id="vmess-protocol-ckeck" ${protocols.includes("trojan") ? "checked" : ""}>
-                <label class="form-check-label" for="vmess-protocol-ckeck">TROJAN</label>
+              <div class="form-check">
+                <input type="checkbox" name="protocols" value="trojan" class="form-check-input" id="trojan-protocol-ckeck" ${protocols.includes("trojan") ? "checked" : ""} />
+                <label class="form-check-label" for="trojan-protocol-ckeck">TROJAN</label>
               </div>
-              <div class="mb-3 form-check">
-                <input type="checkbox" name="protocols" value="ss" class="form-check-input" id="vmess-protocol-ckeck" ${protocols.includes("ss") ? "checked" : ""}>
-                <label class="form-check-label" for="vmess-protocol-ckeck">ShadowSocks</label>
+              <div class="form-check">
+                <input type="checkbox" name="protocols" value="ss" class="form-check-input" id="ss-protocol-ckeck" ${protocols.includes("ss") ? "checked" : ""} />
+                <label class="form-check-label" for="ss-protocol-ckeck">ShadowSocks</label>
               </div>
             </div>
           </div>
-          <div class="mb-3 p-3">
+          <div class="mb-1 p-1">
             <label for="clean-ip" class="form-label fw-bold">
               Clean IP or clean subdomain / \u0622\u06CC\u200C\u067E\u06CC \u062A\u0645\u06CC\u0632 \u06CC\u0627 \u0633\u0627\u0628\u200C\u062F\u0627\u0645\u06CC\u0646 \u0622\u06CC\u200C\u067E\u06CC \u062A\u0645\u06CC\u0632
             </label>
-            <textarea rows="2" name="clean_ips" class="form-control" id="clean-ip">${cleanDomainIPs.join("\n")}</textarea>
+            <textarea rows="3" name="clean_ips" class="form-control" id="clean-ip">${cleanDomainIPs.join("\n")}</textarea>
             <div class="form-text">
               One IP or subdomain per line. / \u062F\u0631 \u0647\u0631 \u0633\u0637\u0631 \u06CC\u06A9 \u0622\u06CC\u200C\u067E\u06CC \u06CC\u0627 \u0633\u0627\u0628\u200C\u062F\u0627\u0645\u06CC\u0646 \u0648\u0627\u0631\u062F \u06A9\u0646\u06CC\u062F.
             </div>
+            <div>
+              <a href="https://vfarid.github.io/cf-ip-scanner" target="_blank">Find Clean IP / \u062C\u0633\u062A\u062C\u0648\u06CC \u0622\u06CC\u200C\u067E\u06CC \u062A\u0645\u06CC\u0632</a>
+            </div>
           </div>
-          <div class="mb-3 p-3">
+          <div class="mb-1 p-1">
             <label for="alpn-list" class="form-label fw-bold">
               ALPN List:
             </label>
@@ -4453,7 +4509,7 @@ async function GetPanel(request, env) {
               One item per line. / \u062F\u0631 \u0647\u0631 \u0633\u0637\u0631 \u06CC\u06A9 \u0622\u06CC\u062A\u0645 \u0648\u0627\u0631\u062F \u06A9\u0646\u06CC\u062F.
             </div>
           </div>
-          <div class="mb-3 p-3">
+          <div class="mb-1 p-1">
             <label for="pf-list" class="form-label fw-bold">
               FingerPrint List:
             </label>
@@ -4462,7 +4518,7 @@ async function GetPanel(request, env) {
               One item per line. / \u062F\u0631 \u0647\u0631 \u0633\u0637\u0631 \u06CC\u06A9 \u0622\u06CC\u062A\u0645 \u0648\u0627\u0631\u062F \u06A9\u0646\u06CC\u062F.
             </div>
           </div>
-          <div class="mb-3 p-3">
+          <div class="mb-1 p-1">
             <label for="providers" class="form-label fw-bold">
               Providers / \u062A\u0627\u0645\u06CC\u0646 \u06A9\u0646\u0646\u062F\u06AF\u0627\u0646:
             </label>
@@ -4471,7 +4527,7 @@ async function GetPanel(request, env) {
               One link per line. / \u062F\u0631 \u0647\u0631 \u0633\u0637\u0631 \u06CC\u06A9 \u0644\u06CC\u0646\u06A9 \u0648\u0627\u0631\u062F \u06A9\u0646\u06CC\u062F. (Accepts base64, yaml, raw)
             </div>
           </div>
-          <div class="mb-3 p-3">
+          <div class="mb-1 p-1">
             <label for="configs" class="form-label fw-bold">
               Personal configs / \u06A9\u0627\u0646\u0641\u06CC\u06AF\u200C\u0647\u0627\u06CC \u0634\u062E\u0635\u06CC:
             </label>
@@ -4501,7 +4557,7 @@ async function GetPanel(request, env) {
       </head>
       <body dir="ltr">
         <div class="container border p-0">
-          <div class="p-3 bg-primary text-white">
+          <div class="p-1 bg-primary text-white">
             <div class="text-nowrap fs-4 fw-bold text-center">V2RAY Worker - Control Panel</div>
             <div class="text-nowrap fs-6 text-center">
               Version 2.0 by
@@ -4524,11 +4580,11 @@ async function GetPanel(request, env) {
             <input id="clash-link" readonly value="https://${url.hostname}/clash" class="p-1" style="width: calc(100% - 150px)">
             <button onclick="var tmp=document.getElementById('clash-link');tmp.select();tmp.setSelectionRange(0,99999);navigator.clipboard.writeText(tmp.value)" class="btn btn-primary p-1 mb-1">Copy</button>
           </div>
-          <div class="mx-5 my-2 p-3 border bg-warning text-center">
+          <div class="mx-5 my-2 p-1 border bg-warning text-center">
             <p>The "settings" variable is not defined! Please define a namespace in Workers/KV section and add a variable named "settings" in your worker settings, as described in the video.</p>  
             <p dir="rtl">\u0645\u062A\u063A\u06CC\u0631 settings \u062A\u063A\u0631\u06CC\u0641 \u0646\u0634\u062F\u0647 \u0627\u0633\u062A. \u0644\u0637\u0641\u0627 \u0645\u0637\u0627\u0628\u0642 \u0648\u06CC\u062F\u06CC\u0648\u06CC \u0622\u0645\u0648\u0632\u0634\u06CC\u060C \u062F\u0631 \u0628\u062E\u0634 KV \u06CC\u06A9 namespace \u062A\u0639\u0631\u06CC\u0641 \u06A9\u0631\u062F\u0647 \u0648 \u062F\u0631 \u0628\u062E\u0634 \u0645\u062A\u063A\u06CC\u0631\u0647\u0627\u06CC \u0648\u0631\u06A9\u0631\u060C \u0645\u062A\u063A\u06CC\u0631 settings \u0631\u0627 \u0627\u0636\u0627\u0641\u0647 \u0646\u0645\u0627\u06CC\u06CC\u062F.</p>
           </div>
-          <div class="mx-5 my-2 p-3 border bg-success text-white text-center">
+          <div class="mx-5 my-2 p-1 border bg-success text-white text-center">
             <p>You can continue using your worker without control panel.</p>  
             <p>\u0634\u0645\u0627 \u0645\u06CC\u200C\u062A\u0648\u0627\u0646\u06CC\u062F \u0627\u0632 \u0648\u0631\u06A9\u0631 \u062E\u0648\u062F \u0628\u062F\u0648\u0646 \u06A9\u0646\u062A\u0631\u0644 \u067E\u0646\u0644 \u0627\u0633\u062A\u0641\u0627\u062F\u0647 \u0646\u0645\u0627\u06CC\u06CC\u062F.</p>  
           </div>
@@ -4595,10 +4651,11 @@ async function PostPanel(request, env) {
 }
 
 // src/auth.ts
+init_modules_watch_stub();
 var bcrypt2 = __toESM(require_bcrypt());
 async function GetLogin(request, env) {
   const url = new URL(request.url);
-  var htmlMessage = "";
+  let htmlMessage = "";
   const message = url.searchParams.get("message");
   if (message == "error") {
     htmlMessage = `<div class="p-3 bg-danger text-white fw-bold text-center">Invalid password / \u06A9\u0644\u0645\u0647 \u0639\u0628\u0648\u0631 \u0645\u0639\u062A\u0628\u0631 \u0646\u0645\u06CC\u200C\u0628\u0627\u0634\u062F!</div>`;
@@ -4644,7 +4701,7 @@ async function PostLogin(request, env) {
   const url = new URL(request.url);
   const formData = await request.formData();
   const password = formData.get("password") || "";
-  var hashedPassword = await env.settings.get("Password") || "";
+  let hashedPassword = await env.settings.get("Password") || "";
   await Delay(1e3);
   const match = await bcrypt2.compare(password, hashedPassword);
   if (match) {
@@ -4655,7 +4712,11 @@ async function PostLogin(request, env) {
   return Response.redirect(`${url.protocol}//${url.hostname}${url.port != "443" ? ":" + url.port : ""}/login?message=error`, 302);
 }
 
+// src/collector.ts
+init_modules_watch_stub();
+
 // node_modules/js-yaml/dist/js-yaml.mjs
+init_modules_watch_stub();
 function isNothing(subject) {
   return typeof subject === "undefined" || subject === null;
 }
@@ -4750,6 +4811,7 @@ function getLine(buffer, lineStart, lineEnd, position, maxLineLength) {
   return {
     str: head + buffer.slice(lineStart, lineEnd).replace(/\t/g, "\u2192") + tail,
     pos: position - lineStart + head.length
+    // relative position
   };
 }
 function padStart(string, max) {
@@ -5160,6 +5222,7 @@ var int = new type("tag:yaml.org,2002:int", {
     decimal: function(obj) {
       return obj.toString(10);
     },
+    /* eslint-disable max-len */
     hexadecimal: function(obj) {
       return obj >= 0 ? "0x" + obj.toString(16).toUpperCase() : "-0x" + obj.toString(16).toUpperCase().slice(1);
     }
@@ -5173,12 +5236,15 @@ var int = new type("tag:yaml.org,2002:int", {
   }
 });
 var YAML_FLOAT_PATTERN = new RegExp(
+  // 2.5e4, 2.5 and integers
   "^(?:[-+]?(?:[0-9][0-9_]*)(?:\\.[0-9_]*)?(?:[eE][-+]?[0-9]+)?|\\.[0-9_]+(?:[eE][-+]?[0-9]+)?|[-+]?\\.(?:inf|Inf|INF)|\\.(?:nan|NaN|NAN))$"
 );
 function resolveYamlFloat(data) {
   if (data === null)
     return false;
-  if (!YAML_FLOAT_PATTERN.test(data) || data[data.length - 1] === "_") {
+  if (!YAML_FLOAT_PATTERN.test(data) || // Quick hack to not allow integers end with `_`
+  // Probably should update regexp & check speed
+  data[data.length - 1] === "_") {
     return false;
   }
   return true;
@@ -5599,6 +5665,7 @@ function generateError(state, message) {
   var mark = {
     name: state.filename,
     buffer: state.input.slice(0, -1),
+    // omit trailing \0
     position: state.position,
     line: state.line,
     column: state.position - state.lineStart
@@ -6826,7 +6893,13 @@ function isNsCharOrWhitespace(c) {
 function isPlainSafe(c, prev, inblock) {
   var cIsNsCharOrWhitespace = isNsCharOrWhitespace(c);
   var cIsNsChar = cIsNsCharOrWhitespace && !isWhitespace(c);
-  return (inblock ? cIsNsCharOrWhitespace : cIsNsCharOrWhitespace && c !== CHAR_COMMA && c !== CHAR_LEFT_SQUARE_BRACKET && c !== CHAR_RIGHT_SQUARE_BRACKET && c !== CHAR_LEFT_CURLY_BRACKET && c !== CHAR_RIGHT_CURLY_BRACKET) && c !== CHAR_SHARP && !(prev === CHAR_COLON && !cIsNsChar) || isNsCharOrWhitespace(prev) && !isWhitespace(prev) && c === CHAR_SHARP || prev === CHAR_COLON && cIsNsChar;
+  return (
+    // ns-plain-safe
+    (inblock ? (
+      // c = flow-in
+      cIsNsCharOrWhitespace
+    ) : cIsNsCharOrWhitespace && c !== CHAR_COMMA && c !== CHAR_LEFT_SQUARE_BRACKET && c !== CHAR_RIGHT_SQUARE_BRACKET && c !== CHAR_LEFT_CURLY_BRACKET && c !== CHAR_RIGHT_CURLY_BRACKET) && c !== CHAR_SHARP && !(prev === CHAR_COLON && !cIsNsChar) || isNsCharOrWhitespace(prev) && !isWhitespace(prev) && c === CHAR_SHARP || prev === CHAR_COLON && cIsNsChar
+  );
 }
 function isPlainSafeFirst(c) {
   return isPrintable(c) && c !== CHAR_BOM && !isWhitespace(c) && c !== CHAR_MINUS && c !== CHAR_QUESTION && c !== CHAR_COLON && c !== CHAR_COMMA && c !== CHAR_LEFT_SQUARE_BRACKET && c !== CHAR_RIGHT_SQUARE_BRACKET && c !== CHAR_LEFT_CURLY_BRACKET && c !== CHAR_RIGHT_CURLY_BRACKET && c !== CHAR_SHARP && c !== CHAR_AMPERSAND && c !== CHAR_ASTERISK && c !== CHAR_EXCLAMATION && c !== CHAR_VERTICAL_LINE && c !== CHAR_EQUALS && c !== CHAR_GREATER_THAN && c !== CHAR_SINGLE_QUOTE && c !== CHAR_DOUBLE_QUOTE && c !== CHAR_PERCENT && c !== CHAR_COMMERCIAL_AT && c !== CHAR_GRAVE_ACCENT;
@@ -6877,7 +6950,8 @@ function chooseScalarStyle(string, singleLineOnly, indentPerLevel, lineWidth, te
       if (char === CHAR_LINE_FEED) {
         hasLineBreak = true;
         if (shouldTrackWidth) {
-          hasFoldableLine = hasFoldableLine || i - previousLineBreak - 1 > lineWidth && string[previousLineBreak + 1] !== " ";
+          hasFoldableLine = hasFoldableLine || // Foldable line = too long, and not more-indented.
+          i - previousLineBreak - 1 > lineWidth && string[previousLineBreak + 1] !== " ";
           previousLineBreak = i;
         }
       } else if (!isPrintable(char)) {
@@ -7342,14 +7416,16 @@ var js_yaml_default = jsYaml;
 var import_buffer2 = __toESM(require_buffer());
 
 // src/config.ts
+init_modules_watch_stub();
 var import_buffer = __toESM(require_buffer());
 function MixConfig(cnf, url, address, provider) {
+  const hostname = MuddleDomain(url.hostname);
   try {
-    var conf = { ...cnf };
+    let conf = { ...cnf };
     if (!conf.tls || conf.network != "ws") {
       return null;
     }
-    var addr = "";
+    let addr = "";
     if (conf.servername) {
       addr = conf.servername;
     } else if (conf["ws-opts"] && conf["ws-opts"].headers.Host && !IsIp(conf["ws-opts"].headers.Host)) {
@@ -7366,7 +7442,7 @@ function MixConfig(cnf, url, address, provider) {
     if (!cfPorts.includes(conf.port)) {
       return null;
     }
-    if (addr.endsWith(".workers.dev") && conf.path) {
+    if (addr.toLocaleLowerCase().endsWith(".workers.dev") && conf.path) {
       return null;
     }
     conf.name = conf.name + "-worker";
@@ -7374,11 +7450,11 @@ function MixConfig(cnf, url, address, provider) {
     conf["ws-opts"] = {
       path: "",
       headers: {
-        Host: url.hostname
+        Host: hostname
       }
     };
-    conf.host = url.hostname;
-    conf.servername = url.hostname;
+    conf.host = hostname;
+    conf.servername = hostname;
     conf.server = address;
     conf.path = "/" + addr + (path ? "/" + path.replace(/^\//g, "") : "");
     conf["ws-opts"].path = conf.path;
@@ -7424,8 +7500,8 @@ function EncodeConfig(conf) {
   return "";
 }
 function DecodeConfig(configStr) {
-  var match = null;
-  var conf = null;
+  let match = null;
+  let conf = null;
   if (configStr.startsWith("vmess://")) {
     try {
       conf = JSON.parse(import_buffer.Buffer.from(configStr.substring(8), "base64").toString("utf-8"));
@@ -7508,18 +7584,20 @@ function ValidateConfig(conf) {
 
 // src/collector.ts
 async function GetConfigList(url, env) {
-  var maxConfigs = 200;
-  var protocols = [];
-  var providers = [];
-  var alpnList = [];
-  var fingerPrints = [];
-  var includeOriginalConfigs = true;
-  var includeMergedConfigs = true;
-  var cleanDomainIPs = [];
-  var myConfigs = [];
-  var settingsNotAvailable = true;
+  let maxConfigs = 200;
+  let maxVlessConfigs = 10;
+  let protocols = [];
+  let providers = [];
+  let alpnList = [];
+  let fingerPrints = [];
+  let includeOriginalConfigs = true;
+  let includeMergedConfigs = true;
+  let cleanDomainIPs = [];
+  let myConfigs = [];
+  let settingsNotAvailable = true;
   try {
     maxConfigs = parseInt(await env.settings.get("MaxConfigs") || "200");
+    maxVlessConfigs = Math.ceil(maxConfigs / 20);
     protocols = await env.settings.get("Protocols").then((val) => {
       return val ? val.split("\n") : [];
     });
@@ -7533,7 +7611,7 @@ async function GetConfigList(url, env) {
       return val ? val.split("\n") : [];
     });
     includeOriginalConfigs = (await env.settings.get("IncludeOriginalConfigs") || "yes") == "yes";
-    includeMergedConfigs = (await env.settings.get("IncludeMergedConfigs") || "yes") == "yes";
+    includeMergedConfigs = (await env.settings.get("IncludeMergedConfigs") || "yes") == "yes" && protocols.includes("vmess");
     cleanDomainIPs = await env.settings.get("CleanDomainIPs").then((val) => {
       return val ? val.split("\n") : [];
     });
@@ -7548,15 +7626,15 @@ async function GetConfigList(url, env) {
     fingerPrints = defaultPFList;
     includeOriginalConfigs = true;
     includeMergedConfigs = true;
-    cleanDomainIPs = [url.hostname];
+    cleanDomainIPs = [MuddleDomain(url.hostname)];
   }
   if (includeOriginalConfigs && includeMergedConfigs) {
     maxConfigs = Math.floor(maxConfigs / 2);
   }
-  var configList = [];
-  var acceptableConfigList = [];
-  var finalConfigList = [];
-  var newConfigs = [];
+  let configList = [];
+  let acceptableConfigList = [];
+  let finalConfigList = [];
+  let newConfigs = [];
   const configPerList = Math.floor(maxConfigs / Object.keys(providers).length);
   for (const providerUrl of providers) {
     try {
@@ -7569,10 +7647,8 @@ async function GetConfigList(url, env) {
         }
         newConfigs = newConfigs.filter(ValidateConfig);
       } catch (e) {
-        var tmpType = "raw";
         if (IsBase64(content)) {
           content = import_buffer2.Buffer.from(content, "base64").toString("utf-8");
-          tmpType = "base64";
         }
         newConfigs = content.split("\n").filter((cnf) => cnf.match(/^(vmess|vless|trojan|ss):\/\//i));
         newConfigs = newConfigs.map(DecodeConfig).filter(ValidateConfig);
@@ -7596,15 +7672,15 @@ async function GetConfigList(url, env) {
     }
   }
   if (!cleanDomainIPs.length) {
-    cleanDomainIPs = [url.hostname];
+    cleanDomainIPs = [MuddleDomain(url.hostname)];
   }
-  var address = cleanDomainIPs[Math.floor(Math.random() * cleanDomainIPs.length)];
-  for (const i2 in acceptableConfigList) {
-    const el = acceptableConfigList[i2];
-    acceptableConfigList[i2].mergedConfigs = el.configs.map((cnf) => MixConfig(cnf, url, address, el.name)).filter((cnf) => cnf?.merged && cnf?.name);
+  let address = cleanDomainIPs[Math.floor(Math.random() * cleanDomainIPs.length)];
+  for (const i in acceptableConfigList) {
+    const el = acceptableConfigList[i];
+    acceptableConfigList[i].mergedConfigs = el.configs.map((cnf) => MixConfig(cnf, url, address, el.name)).filter((cnf) => cnf?.merged && cnf?.name);
   }
-  var remaining = 0;
-  for (var i = 0; i < 5; i++) {
+  let remaining = 0;
+  for (let i = 0; i < 5; i++) {
     for (const el of acceptableConfigList) {
       if (el.count > el.mergedConfigs.length) {
         remaining = remaining + el.count - el.mergedConfigs.length;
@@ -7621,15 +7697,15 @@ async function GetConfigList(url, env) {
     );
   }
   if (includeOriginalConfigs) {
-    var remaining = 0;
-    for (var i = 0; i < 5; i++) {
+    let remaining2 = 0;
+    for (let i = 0; i < 5; i++) {
       for (const el of configList) {
         if (el.count > el.configs.length) {
-          remaining = remaining + el.count - el.configs.length;
+          remaining2 = remaining2 + el.count - el.configs.length;
           el.count = el.configs.length;
-        } else if (el.count < el.configs.length && remaining > 0) {
-          el.count = el.count + Math.ceil(remaining / 3);
-          remaining = remaining - Math.ceil(remaining / 3);
+        } else if (el.count < el.configs.length && remaining2 > 0) {
+          el.count = el.count + Math.ceil(remaining2 / 3);
+          remaining2 = remaining2 - Math.ceil(remaining2 / 3);
         }
       }
     }
@@ -7645,9 +7721,7 @@ async function GetConfigList(url, env) {
     );
   }
   if (protocols.includes("vless")) {
-    finalConfigList = finalConfigList.concat(
-      await GetVlessConfigList(url.hostname, cleanDomainIPs, env)
-    );
+    finalConfigList = (await GetVlessConfigList(url.hostname, cleanDomainIPs, maxVlessConfigs, env)).concat(finalConfigList);
   }
   finalConfigList = finalConfigList.filter(ValidateConfig);
   if (alpnList.length) {
@@ -7666,8 +7740,9 @@ async function GetConfigList(url, env) {
 }
 
 // src/clash.ts
+init_modules_watch_stub();
 function ToYamlSubscription(configList) {
-  var clash = defaultClashConfig;
+  let clash = defaultClashConfig;
   clash.proxies = configList.map((conf) => (({ merged, ...others }) => others)(conf));
   const groupedConfigs = configList.reduce((group, conf) => {
     if (!group[conf?.merged ? "Worker" : "Original"]) {
@@ -7676,11 +7751,11 @@ function ToYamlSubscription(configList) {
     group[conf?.merged ? "Worker" : "Original"].push(conf);
     return group;
   }, {});
-  var proxyTiers = [];
+  let proxyTiers = [];
   for (const worker in groupedConfigs) {
     proxyTiers[worker] = groupedConfigs[worker];
   }
-  var proxyGroups = [
+  let proxyGroups = [
     {
       name: "All",
       type: "select",
@@ -7736,6 +7811,7 @@ function ToYamlSubscription(configList) {
 }
 
 // src/sub.ts
+init_modules_watch_stub();
 var import_buffer3 = __toESM(require_buffer());
 function ToBase64Subscription(configList) {
   return import_buffer3.Buffer.from(configList.map(EncodeConfig).join("\n"), "utf-8").toString("base64");
@@ -7756,7 +7832,7 @@ var worker_default = {
       }
     } else if (lcPath == "vless-ws") {
       return VlessOverWSHandler(request, env);
-    } else if (lcPath) {
+    } else if (lcPath == "login") {
       if (request.method === "GET") {
         return GetLogin(request, env);
       } else if (request.method === "POST") {
@@ -7775,4 +7851,27 @@ var worker_default = {
 export {
   worker_default as default
 };
+/*! Bundled license information:
+
+bcryptjs/dist/bcrypt.js:
+  (**
+   * @license bcrypt.js (c) 2013 Daniel Wirtz <dcode@dcode.io>
+   * Released under the Apache License, Version 2.0
+   * see: https://github.com/dcodeIO/bcrypt.js for details
+   *)
+
+ieee754/index.js:
+  (*! ieee754. BSD-3-Clause License. Feross Aboukhadijeh <https://feross.org/opensource> *)
+
+buffer/index.js:
+  (*!
+   * The buffer module from node.js, for the browser.
+   *
+   * @author   Feross Aboukhadijeh <https://feross.org>
+   * @license  MIT
+   *)
+
+js-yaml/dist/js-yaml.mjs:
+  (*! js-yaml 4.1.0 https://github.com/nodeca/js-yaml @license MIT *)
+*/
 //# sourceMappingURL=worker.js.map
