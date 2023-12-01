@@ -6,11 +6,11 @@ import { RemoteSocketWrapper, CustomArrayBuffer, VlessHeader, UDPOutbound, Confi
 
 const WS_READY_STATE_OPEN: number = 1
 const WS_READY_STATE_CLOSING: number = 2
+let uuid: string = ""
 
 export async function GetVlessConfigList(sni: string, addressList: Array<string>, env: Env) {
   let uuid: string | null = await env.settings.get("UUID")
   let configList: Array<Config> = []
-  console.log(addressList)
   if (uuid) {
     for (let i = 0; i < 20; i++) {
       configList.push(GetVlessConfig(
@@ -27,7 +27,7 @@ export async function GetVlessConfigList(sni: string, addressList: Array<string>
 }
 
 export async function VlessOverWSHandler(request: Request, env: Env) {
-  const uuid: string = await env.settings.get("UUID") || ""
+  uuid = uuid || await env.settings.get("UUID") || ""
 	const [client, webSocket]: Array<WebSocket> = Object.values(new WebSocketPair)
 
 	webSocket.accept()
@@ -267,7 +267,7 @@ async function HandleUDPOutbound(webSocket: WebSocket, vlessResponseHeader: Arra
 	// only handle dns udp for now
 	transformStream.readable.pipeTo(new WritableStream({
 		async write(chunk: any) {
-			const resp = await fetch('https://8.8.8.8/dns-query',
+			const resp = await fetch('https://1.1.1.1/dns-query',
 				{
 					method: 'POST',
 					headers: {
