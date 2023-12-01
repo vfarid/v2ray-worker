@@ -32,21 +32,21 @@ export async function GetPanel(request: Request, env: Env): Promise<Response> {
     var htmlMessage = ""
     const message = url.searchParams.get("message")
     if (message == "success") {
-      htmlMessage = `<div class="p-3 bg-success text-white fw-bold text-center">Settings saved successfully. / تنظیمات با موفقیت ذخیره شد.</div>`
+      htmlMessage = `<div class="p-1 bg-success text-white fw-bold text-center">Settings saved successfully. / تنظیمات با موفقیت ذخیره شد.</div>`
     } else if (message == "error") {
-      htmlMessage = `<div class="p-3 bg-danger text-white fw-bold text-center">Failed to save settings! / خطا در ذخیره‌ی تنظیمات!</div>`
+      htmlMessage = `<div class="p-1 bg-danger text-white fw-bold text-center">Failed to save settings! / خطا در ذخیره‌ی تنظیمات!</div>`
     }
 
     var passwordSection = ""
     if (hash) {
       passwordSection = `
-      <div class="mb-3 p-3">
+      <div class="mb-3 p-1">
         <button type="submit" name="reset_password" value="1" class="btn btn-danger">Remove Password / حذف کلمه عبور</button>
       </div>
       `
     } else {
       passwordSection = `
-      <div class="mb-3 p-3 bg-warning">
+      <div class="mb-3 p-1 bg-warning">
         <label for="password" class="form-label fw-bold">
           Enter password, if you want to protect panel / در صورتی که میخواهید از پنل محافظت کنید، یک کلمه‌ی عبور وارد کنید:
         </label>
@@ -72,7 +72,7 @@ export async function GetPanel(request: Request, env: Env): Promise<Response> {
     </head>
     <body dir="ltr">
       <div class="container border p-0">
-        <div class="p-3 bg-primary text-white">
+        <div class="p-1 bg-primary text-white">
           <div class="text-nowrap fs-4 fw-bold text-center">V2RAY Worker - Control Panel</div>
           <div class="text-nowrap fs-6 text-center">
             Version 2.0 by
@@ -97,61 +97,64 @@ export async function GetPanel(request: Request, env: Env): Promise<Response> {
           <button onclick="var tmp=document.getElementById('clash-link');tmp.select();tmp.setSelectionRange(0,99999);navigator.clipboard.writeText(tmp.value)" class="btn btn-primary p-1 mb-1">Copy</button>
         </div>
         <form class="px-4 py-4 border-top" method="post">
-          <div class="mb-3 p-3">
+          <div class="mb-1 p-1">
             <label for="includes" class="form-label fw-bold">
               Merged and original configs / کانفیگ‌های اصلی و ترکیبی:
             </label>
             <div id="includes">
-              <div class="mb-3 form-check">
+              <div class="form-check">
                 <input type="checkbox" name="merged" value="yes" class="form-check-input" id="merged-ckeck" ${includeMergedConfigs == "yes" ? "checked" : ""}>
                 <label class="form-check-label" for="merged-ckeck">Include configs merged with worker / کانفیگ‌های ترکیب شده با ورکر را اضافه کن</label>
               </div>
-              <div class="mb-3 form-check">
+              <div class="form-check">
                 <input type="checkbox" name="original" value="yes" class="form-check-input" id="original-ckeck" ${includeOriginalConfigs == "yes" ? "checked" : ""}>
                 <label class="form-check-label" for="original-ckeck">Include original config / کانفیگ‌های اصلی را اضافه کن</label>
               </div>
             </div>
           </div>
-          <div class="mb-3 p-3">
+          <div class="mb-1 p-1">
             <label for="max-configs" class="form-label fw-bold">
               Max. mumber of configs / حداکثر تعداد کانفیگ:
             </label>
             <input type="number" name="max" class="form-control" id="max-configs" value="${maxConfigs}" min="5"/>
             <div class="form-text"></div>
           </div>
-          <div class="mb-3 p-3">
+          <div class="mb-1 p-1">
             <label for="type" class="form-label fw-bold">
               Protocols / پروتکل‌ها:
             </label>
             <div id="type">
-              <div class="mb-3 form-check">
-                <input type="checkbox" name="protocols" value="vmess" class="form-check-input" id="vmess-protocol-ckeck" ${protocols.includes('vmess') ? "checked" : ""}>
+              <div class="form-check">
+                <input type="checkbox" name="protocols" value="vmess" class="form-check-input" id="vmess-protocol-ckeck" ${protocols.includes('vmess') ? "checked" : ""} />
                 <label class="form-check-label" for="vmess-protocol-ckeck">VMESS</label>
               </div>
-              <div class="mb-3 form-check">
-                <input type="checkbox" name="protocols" value="vless" class="form-check-input" id="vless-protocol-ckeck" ${protocols.includes('vless') ? "checked" : ""}>
+              <div class="form-check">
+                <input type="checkbox" name="protocols" value="vless" class="form-check-input" id="vless-protocol-ckeck" ${protocols.includes('vless') ? "checked" : ""} />
                 <label class="form-check-label" for="vless-protocol-ckeck">VLESS</label>
               </div>
-              <div class="mb-3 form-check">
-                <input type="checkbox" name="protocols" value="trojan" class="form-check-input" id="trojan-protocol-ckeck" ${protocols.includes('trojan') ? "checked" : ""}>
+              <div class="form-check">
+                <input type="checkbox" name="protocols" value="trojan" class="form-check-input" id="trojan-protocol-ckeck" ${protocols.includes('trojan') ? "checked" : ""} />
                 <label class="form-check-label" for="trojan-protocol-ckeck">TROJAN</label>
               </div>
-              <div class="mb-3 form-check">
-                <input type="checkbox" name="protocols" value="ss" class="form-check-input" id="ss-protocol-ckeck" ${protocols.includes('ss') ? "checked" : ""}>
+              <div class="form-check">
+                <input type="checkbox" name="protocols" value="ss" class="form-check-input" id="ss-protocol-ckeck" ${protocols.includes('ss') ? "checked" : ""} />
                 <label class="form-check-label" for="ss-protocol-ckeck">ShadowSocks</label>
               </div>
             </div>
           </div>
-          <div class="mb-3 p-3">
+          <div class="mb-1 p-1">
             <label for="clean-ip" class="form-label fw-bold">
               Clean IP or clean subdomain / آی‌پی تمیز یا ساب‌دامین آی‌پی تمیز
             </label>
-            <textarea rows="2" name="clean_ips" class="form-control" id="clean-ip">${cleanDomainIPs.join("\n")}</textarea>
+            <textarea rows="3" name="clean_ips" class="form-control" id="clean-ip">${cleanDomainIPs.join("\n")}</textarea>
             <div class="form-text">
               One IP or subdomain per line. / در هر سطر یک آی‌پی یا ساب‌دامین وارد کنید.
             </div>
+            <div>
+              <a href="https://vfarid.github.io/cf-ip-scanner" target="_blank">Find Clean IP / جستجوی آی‌پی تمیز</a>
+            </div>
           </div>
-          <div class="mb-3 p-3">
+          <div class="mb-1 p-1">
             <label for="alpn-list" class="form-label fw-bold">
               ALPN List:
             </label>
@@ -160,7 +163,7 @@ export async function GetPanel(request: Request, env: Env): Promise<Response> {
               One item per line. / در هر سطر یک آیتم وارد کنید.
             </div>
           </div>
-          <div class="mb-3 p-3">
+          <div class="mb-1 p-1">
             <label for="pf-list" class="form-label fw-bold">
               FingerPrint List:
             </label>
@@ -169,7 +172,7 @@ export async function GetPanel(request: Request, env: Env): Promise<Response> {
               One item per line. / در هر سطر یک آیتم وارد کنید.
             </div>
           </div>
-          <div class="mb-3 p-3">
+          <div class="mb-1 p-1">
             <label for="providers" class="form-label fw-bold">
               Providers / تامین کنندگان:
             </label>
@@ -178,7 +181,7 @@ export async function GetPanel(request: Request, env: Env): Promise<Response> {
               One link per line. / در هر سطر یک لینک وارد کنید. (Accepts base64, yaml, raw)
             </div>
           </div>
-          <div class="mb-3 p-3">
+          <div class="mb-1 p-1">
             <label for="configs" class="form-label fw-bold">
               Personal configs / کانفیگ‌های شخصی:
             </label>
@@ -209,7 +212,7 @@ export async function GetPanel(request: Request, env: Env): Promise<Response> {
       </head>
       <body dir="ltr">
         <div class="container border p-0">
-          <div class="p-3 bg-primary text-white">
+          <div class="p-1 bg-primary text-white">
             <div class="text-nowrap fs-4 fw-bold text-center">V2RAY Worker - Control Panel</div>
             <div class="text-nowrap fs-6 text-center">
               Version 2.0 by
@@ -232,11 +235,11 @@ export async function GetPanel(request: Request, env: Env): Promise<Response> {
             <input id="clash-link" readonly value="https://${url.hostname}/clash" class="p-1" style="width: calc(100% - 150px)">
             <button onclick="var tmp=document.getElementById('clash-link');tmp.select();tmp.setSelectionRange(0,99999);navigator.clipboard.writeText(tmp.value)" class="btn btn-primary p-1 mb-1">Copy</button>
           </div>
-          <div class="mx-5 my-2 p-3 border bg-warning text-center">
+          <div class="mx-5 my-2 p-1 border bg-warning text-center">
             <p>The "settings" variable is not defined! Please define a namespace in Workers/KV section and add a variable named "settings" in your worker settings, as described in the video.</p>  
             <p dir="rtl">متغیر settings تغریف نشده است. لطفا مطابق ویدیوی آموزشی، در بخش KV یک namespace تعریف کرده و در بخش متغیرهای ورکر، متغیر settings را اضافه نمایید.</p>
           </div>
-          <div class="mx-5 my-2 p-3 border bg-success text-white text-center">
+          <div class="mx-5 my-2 p-1 border bg-success text-white text-center">
             <p>You can continue using your worker without control panel.</p>  
             <p>شما می‌توانید از ورکر خود بدون کنترل پنل استفاده نمایید.</p>  
           </div>
