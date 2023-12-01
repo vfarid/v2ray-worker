@@ -2,7 +2,7 @@ import { UUID } from "crypto"
 import { Config } from "./interfaces"
 
 export function GetMultipleRandomElements(arr: Array<any>, num: number): Array<any> {
-	var shuffled = arr.sort(() => 0.5 - Math.random())
+	let shuffled = arr.sort(() => 0.5 - Math.random())
 	return shuffled.slice(0, num)
 }
 
@@ -12,7 +12,7 @@ export function IsIp(str: string): boolean {
 		if (!/^(\d{1,2}|1\d\d|2[0-4]\d|25[0-5])(\.(\d{1,2}|1\d\d|2[0-4]\d|25[0-5])){2}\.(\d{1,2}|1\d\d|2[0-4]\d|25[0-4])$/.test(str)) {
 			return false
 		}
-		var ls = str.split('.')
+		let ls = str.split('.')
 		if (ls == null || ls.length != 4 || ls[3] == "0" || parseInt(ls[3]) === 0) {
 			return false
 		}
@@ -26,7 +26,10 @@ export function IsValidUUID(uuid: string): boolean {
 }
 
 export function GetVlessConfig(no: number, uuid: UUID, sni: string, address: string, port: number) {
-	return {
+	if (address.toLowerCase() == sni.toLowerCase()) {
+    address = sni
+  }
+  return {
 		name: `${no}-vless-worker-${address}`,
 		type: "vless",
 		tls: true,
@@ -67,7 +70,7 @@ export function RemoveDuplicateConfigs(configList: Array<Config>): Array<Config>
 }
 
 export function GenerateToken(length: number = 32): string {
-  const buffer = new Uint8Array(length)
+  const buffer: Uint8Array = new Uint8Array(length)
   for (let i = 0; i < length; i++) {
     buffer[i] = Math.floor(Math.random() * 256)
   }
@@ -76,4 +79,16 @@ export function GenerateToken(length: number = 32): string {
 
 export function Delay(ms: number): Promise<void> {
   return new Promise((resolve) => setTimeout(resolve, ms))
+}
+
+export function MuddleDomain(hostname: string): string {
+  const parts: string[] = hostname.split(".")
+  const subdomain: string = parts.slice(0, parts.length -2).join(".")
+  const domain: string = parts.slice(-2).join(".")
+
+  const muddledDomain: string = domain.split("").map(
+	  char => Math.random() < 0.5 ? char.toLowerCase() : char.toUpperCase()
+  ).join("")
+  
+  return subdomain + "." + muddledDomain
 }
