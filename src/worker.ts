@@ -26,7 +26,7 @@ export default {
       }
     } else if (lcPath == 'vless-ws') {
       return VlessOverWSHandler(request, env);
-    } else if (lcPath) {
+    } else if (lcPath == 'login') {
       if (request.method === 'GET') {
         return GetLogin(request, env)
       } else if (request.method === 'POST') {
