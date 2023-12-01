@@ -22,7 +22,7 @@ export async function GetLogin(request: Request, env: Env): Promise<Response> {
         <div class="p-3 bg-primary text-white">
           <div class="text-nowrap fs-4 fw-bold text-center">V2RAY Worker - Control Panel</div>
           <div class="text-nowrap fs-6 text-center">
-            Version 2.0 by
+            Version 2.2 by
             <a href="https://twitter.com/vahidfarid" target="_blank" class="text-white">Vahid Farid</a>
           </div>
         </div>
