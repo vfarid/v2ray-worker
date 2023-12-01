@@ -1,16 +1,17 @@
 import { Buffer } from 'buffer'
-import { IsIp, IsValidUUID } from "./helpers"
+import { IsIp, IsValidUUID, MuddleDomain } from "./helpers"
 import { cfPorts, supportedCiphers } from "./variables"
 import { Config } from "./interfaces"
 
 export function MixConfig(cnf: Config, url: URL, address: string, provider: string): Config | null {
-	try {
-		var conf = {...cnf};
+	const hostname: string = MuddleDomain(url.hostname)
+  try {
+		let conf = {...cnf};
 		if (!conf.tls || conf.network != "ws") {
 			return null
 		}
 
-		var addr = ""
+		let addr = ""
 		if (conf.servername) {
 			addr = conf.servername
 		} else if (conf["ws-opts"] && conf["ws-opts"].headers.Host && !IsIp(conf["ws-opts"].headers.Host)) {
@@ -29,29 +30,7 @@ export function MixConfig(cnf: Config, url: URL, address: string, provider: stri
 			return null
 		}
 
-		if (addr.endsWith('.workers.dev') && conf.path) {
-			// const [part1, part2] = conf.path.split("/")
-			// var path = ""
-			// if (part1.includes(":")) {
-			// 	addr = part1.replace(/^\//g, "").split(":")
-			// 	conf.port = parseInt(addr[1])
-			// 	addr = addr[0]
-			// 	path = "/" + part2.replace(/^\//g, "")
-			// } else if (part2.includes(":")) {
-			// 	addr = part2.replace(/^\//g, "").split(":")
-			// 	conf.port = parseInt(addr[1])
-			// 	addr = addr[0]
-			// 	path = "/" + part1.replace(/^\//g, "")
-			// } else if (part1.includes(".")) {
-			// 	addr = part1.replace(/^\//g, "")
-			// 	conf.port = 443
-			// 	path = "/" + part2.replace(/^\//g, "")
-			// } else {
-			// 	addr = part2.replace(/^\//g, "")
-			// 	conf.port = 443
-			// 	path = "/" + part1.replace(/^\//g, "")
-			// }
-			// conf["ws-opts"].path = path
+		if (addr.toLocaleLowerCase().endsWith('.workers.dev') && conf.path) {
       return null
 		}
 
@@ -60,11 +39,11 @@ export function MixConfig(cnf: Config, url: URL, address: string, provider: stri
     conf["ws-opts"] = {
       path: "",
       headers: {
-        Host: url.hostname
+        Host: hostname
       }
     }
-		conf.host = url.hostname
-		conf.servername = url.hostname
+		conf.host = hostname
+		conf.servername = hostname
 		conf.server = address
 		conf.path = "/" + addr + (path ? "/" + path.replace(/^\//g, "") : "")
     conf["ws-opts"].path = conf.path
@@ -199,8 +178,8 @@ export function EncodeConfig(conf: Config): string {
 }
   
 export function DecodeConfig(configStr: string): Config {
-	var match: any = null
-	var conf: any = null
+	let match: any = null
+	let conf: any = null
 	if (configStr.startsWith("vmess://")) {
 	  try {
       conf = JSON.parse(Buffer.from(configStr.substring(8), "base64").toString("utf-8"))
