@@ -7,53 +7,39 @@ export async function GetLogin(request: Request, env: Env): Promise<Response> {
   var htmlMessage = ""
   const message = url.searchParams.get("message")
   if (message == "error") {
-    htmlMessage = `<b class="text-danger">Incorrect Password!</b>`
-  } else {
-    htmlMessage = `Login to Panel`
+    htmlMessage = `<div class="p-3 bg-danger text-white fw-bold text-center">Invalid password / کلمه عبور معتبر نمی‌باشد!</div>`
   }
 
   const htmlContent = `
   <!DOCTYPE html>
   <html>
     <head>
-      <title>Login | Admin Panel</title>
-      <meta name="viewport" content="width=device-width, initial-scale=1">
       <meta charset="utf8" />
-      <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/admin-lte/3.2.0/css/adminlte.min.css" integrity="sha512-IuO+tczf4J43RzbCMEFggCWW5JuX78IrCJRFFBoQEXNvGI6gkUw4OjuwMidiS4Lm9Q2lILzpJwZuMWuSEeT9UQ==" crossorigin="anonymous" referrerpolicy="no-referrer" />
-      <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/all.min.css" integrity="sha512-z3gLpd7yknf1YoNbCzqRKc4qyor8gaKU1qmn+CShxbuBusANI9QpRohGBreCFkKxLhei6S9CQXFEbbKuqLg0DA==" crossorigin="anonymous" referrerpolicy="no-referrer" />
+      <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.1/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-4bw+/aepP/YC94hEpVNVgiZdgIC5+VKNBQNGCHeKRQN+PtmoHDEXuppvnDJzQIu9" crossorigin="anonymous">
     </head>
-    <body class="hold-transition login-page">
-      <main class="login-box">
-        <div class="login-logo"> Control <b>Panel</b>
-        </div>
-        <div class="card">
-          <div class="card-body login-card-body">
-            <p class="login-box-msg">${htmlMessage}</p>
-            <form method="post">
-              <div class="input-group mb-3">
-                <input type="password" class="form-control" id="inputPassword2" placeholder="Password" name="password" minlength="6" required>
-                <div class="input-group-append">
-                  <div class="input-group-text">
-                    <span class="fas fa-lock"></span>
-                  </div>
-                </div>
-              </div>
-              <div class="row">
-                <div class="col-8">
-                  <div class="icheck-primary">
-                    <input type="checkbox" id="remember">
-                    <label for="remember"> Remember me? </label>
-                  </div>
-                </div>
-                <div class="col-4">
-                  <button type="submit" class="btn btn-primary btn-block">Sign In</button>
-                </div>
-              </div>
-            </form>
+    <body dir="ltr">
+      <div class="container border p-0">
+        <div class="p-3 bg-primary text-white">
+          <div class="text-nowrap fs-4 fw-bold text-center">V2RAY Worker - Control Panel</div>
+          <div class="text-nowrap fs-6 text-center">
+            Version 2.0 by
+            <a href="https://twitter.com/vahidfarid" target="_blank" class="text-white">Vahid Farid</a>
           </div>
         </div>
-      </main>
-      <script src="https://cdnjs.cloudflare.com/ajax/libs/admin-lte/3.2.0/js/adminlte.min.js" integrity="sha512-KBeR1NhClUySj9xBB0+KRqYLPkM6VvXiiWaSz/8LCQNdRpUm38SWUrj0ccNDNSkwCD9qPA4KobLliG26yPppJA==" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
+        ${htmlMessage}
+        <form class="mt-5 p-3 row g-3" method="post">
+          <div class="col-auto">
+            Enter password / کلمه‌ی عبور را وارد کنید:
+          </div>
+          <div class="col-auto">
+            <label for="inputPassword2" class="visually-hidden">Password</label>
+            <input type="password" class="form-control" id="inputPassword2" placeholder="Password" name="password" minlength="6" required>
+          </div>
+          <div class="col-auto">
+            <button type="submit" class="btn btn-primary mb-3">Confirm identity / تایید هویت</button>
+          </div>
+        </form>
+      </div>
     </body>
   </html>
   `
