@@ -4421,7 +4421,7 @@ async function GetPanel(request, env) {
         <div class="p-1 bg-primary text-white">
           <div class="text-nowrap fs-4 fw-bold text-center">V2RAY Worker - Control Panel</div>
           <div class="text-nowrap fs-6 text-center">
-            Version 2.0 by
+            Version 2.2 by
             <a href="https://twitter.com/vahidfarid" target="_blank" class="text-white">Vahid Farid</a>
           </div>
         </div>
@@ -4560,7 +4560,7 @@ async function GetPanel(request, env) {
           <div class="p-1 bg-primary text-white">
             <div class="text-nowrap fs-4 fw-bold text-center">V2RAY Worker - Control Panel</div>
             <div class="text-nowrap fs-6 text-center">
-              Version 2.0 by
+              Version 2.2 by
               <a href="https://twitter.com/vahidfarid" target="_blank" class="text-white">Vahid Farid</a>
             </div>
           </div>
@@ -4672,7 +4672,7 @@ async function GetLogin(request, env) {
         <div class="p-3 bg-primary text-white">
           <div class="text-nowrap fs-4 fw-bold text-center">V2RAY Worker - Control Panel</div>
           <div class="text-nowrap fs-6 text-center">
-            Version 2.0 by
+            Version 2.2 by
             <a href="https://twitter.com/vahidfarid" target="_blank" class="text-white">Vahid Farid</a>
           </div>
         </div>
