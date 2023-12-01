@@ -3,7 +3,7 @@ import { defaultClashConfig } from "./variables"
 import { Config } from './interfaces';
 
 export function ToYamlSubscription(configList: Array<Config>): string {
-    var clash = defaultClashConfig
+    let clash = defaultClashConfig
     clash.proxies = configList.map((conf: any) => (({merged, ...others}) => others)(conf))
     const groupedConfigs: any = configList.reduce((group: {[key: string]: any}, conf: any) => {
         if (!group[conf?.merged ? 'Worker' : 'Original']) {
@@ -12,11 +12,11 @@ export function ToYamlSubscription(configList: Array<Config>): string {
         group[conf?.merged ? 'Worker' : 'Original'].push(conf);
         return group;
     }, {});
-    var proxyTiers: any = []
+    let proxyTiers: any = []
     for (const worker in groupedConfigs) {
         proxyTiers[worker] = groupedConfigs[worker]
     }
-    var proxyGroups = [
+    let proxyGroups = [
         {
             name: "All",
             type: "select",
