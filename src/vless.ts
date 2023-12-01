@@ -8,11 +8,11 @@ const WS_READY_STATE_OPEN: number = 1
 const WS_READY_STATE_CLOSING: number = 2
 let uuid: string = ""
 
-export async function GetVlessConfigList(sni: string, addressList: Array<string>, env: Env) {
+export async function GetVlessConfigList(sni: string, addressList: Array<string>, max: number, env: Env) {
   let uuid: string | null = await env.settings.get("UUID")
   let configList: Array<Config> = []
   if (uuid) {
-    for (let i = 0; i < 20; i++) {
+    for (let i = 0; i < max; i++) {
       configList.push(GetVlessConfig(
         i + 1,
         uuid as UUID,
