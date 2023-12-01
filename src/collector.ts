@@ -9,6 +9,7 @@ import { Env, Config } from "./interfaces"
 
 export async function GetConfigList(url: URL, env: Env): Promise<Array<Config>> {
   let maxConfigs: number = 200
+  let maxVlessConfigs: number = 10
   let protocols: Array<string> = []
   let providers: Array<string> = []
   let alpnList: Array<string> = []
@@ -21,6 +22,7 @@ export async function GetConfigList(url: URL, env: Env): Promise<Array<Config>> 
 
   try {
     maxConfigs = parseInt(await env.settings.get("MaxConfigs") || "200")
+    maxVlessConfigs = Math.ceil(maxConfigs / 20)
     protocols = await env.settings.get("Protocols").then(val => {return val ? val.split("\n") : []})
     providers = await env.settings.get("Providers").then(val => {return val ? val.split("\n") : []})
     alpnList = await env.settings.get("ALPNs").then(val => {return val ? val.split("\n") : []})
@@ -141,7 +143,7 @@ export async function GetConfigList(url: URL, env: Env): Promise<Array<Config>> 
   }
 
   if (protocols.includes("vless")) {
-    finalConfigList = (await GetVlessConfigList(url.hostname, cleanDomainIPs, env)).concat(finalConfigList)
+    finalConfigList = (await GetVlessConfigList(url.hostname, cleanDomainIPs, maxVlessConfigs, env)).concat(finalConfigList)
   }
 
   finalConfigList = finalConfigList.filter(ValidateConfig)
