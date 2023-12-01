@@ -2,22 +2,22 @@ import yaml from 'js-yaml'
 import { Buffer } from 'buffer'
 import { GetVlessConfigList } from './vless'
 import { MixConfig, ValidateConfig, DecodeConfig } from "./config"
-import { GetMultipleRandomElements, RemoveDuplicateConfigs, IsBase64 } from "./helpers"
+import { GetMultipleRandomElements, RemoveDuplicateConfigs, IsBase64, MuddleDomain } from "./helpers"
 import { defaultProviders, defaultProtocols, defaultALPNList, defaultPFList } from "./variables"
 import { Env, Config } from "./interfaces"
 
 
 export async function GetConfigList(url: URL, env: Env): Promise<Array<Config>> {
-  var maxConfigs: number = 200
-  var protocols: Array<string> = []
-  var providers: Array<string> = []
-  var alpnList: Array<string> = []
-  var fingerPrints: Array<string> = []
-  var includeOriginalConfigs: boolean = true
-  var includeMergedConfigs: boolean = true
-  var cleanDomainIPs: Array<string> = []
-  var myConfigs: Array<string> = []
-  var settingsNotAvailable: boolean = true
+  let maxConfigs: number = 200
+  let protocols: Array<string> = []
+  let providers: Array<string> = []
+  let alpnList: Array<string> = []
+  let fingerPrints: Array<string> = []
+  let includeOriginalConfigs: boolean = true
+  let includeMergedConfigs: boolean = true
+  let cleanDomainIPs: Array<string> = []
+  let myConfigs: Array<string> = []
+  let settingsNotAvailable: boolean = true
 
   try {
     maxConfigs = parseInt(await env.settings.get("MaxConfigs") || "200")
@@ -26,7 +26,7 @@ export async function GetConfigList(url: URL, env: Env): Promise<Array<Config>> 
     alpnList = await env.settings.get("ALPNs").then(val => {return val ? val.split("\n") : []})
     fingerPrints = await env.settings.get("FingerPrints").then(val => {return val ? val.split("\n") : []})
     includeOriginalConfigs = (await env.settings.get("IncludeOriginalConfigs") || "yes") == "yes"
-    includeMergedConfigs = (await env.settings.get("IncludeMergedConfigs") || "yes") == "yes"
+    includeMergedConfigs = ((await env.settings.get("IncludeMergedConfigs") || "yes") == "yes") && protocols.includes("vmess")
     cleanDomainIPs = await env.settings.get("CleanDomainIPs").then(val => {return val ? val.split("\n") : []})
     settingsNotAvailable = (await env.settings.get("MaxConfigs")) === null
     myConfigs = (await env.settings.get("Configs"))?.split("\n") || []
@@ -39,17 +39,17 @@ export async function GetConfigList(url: URL, env: Env): Promise<Array<Config>> 
     fingerPrints = defaultPFList
     includeOriginalConfigs = true
     includeMergedConfigs = true
-    cleanDomainIPs = [url.hostname]
+    cleanDomainIPs = [MuddleDomain(url.hostname)]
   }
 
   if (includeOriginalConfigs && includeMergedConfigs) {
       maxConfigs = Math.floor(maxConfigs / 2)
   }
 
-  var configList: Array<any> = []
-  var acceptableConfigList: Array<any> = []
-  var finalConfigList: Array<Config> = []
-  var newConfigs: Array<any> = []
+  let configList: Array<any> = []
+  let acceptableConfigList: Array<any> = []
+  let finalConfigList: Array<Config> = []
+  let newConfigs: Array<any> = []
   const configPerList: number = Math.floor(maxConfigs / Object.keys(providers).length)
   for (const providerUrl of providers) {
     try {
@@ -62,10 +62,8 @@ export async function GetConfigList(url: URL, env: Env): Promise<Array<Config>> 
         }
         newConfigs = newConfigs.filter(ValidateConfig)
       } catch (e) {
-        var tmpType = "raw"
         if (IsBase64(content)) {
           content = Buffer.from(content, "base64").toString("utf-8")
-          tmpType = "base64"
         }
         newConfigs = content.split("\n").filter((cnf: string) => cnf.match(/^(vmess|vless|trojan|ss):\/\//i))
         newConfigs = newConfigs.map(DecodeConfig).filter(ValidateConfig)
@@ -88,18 +86,18 @@ export async function GetConfigList(url: URL, env: Env): Promise<Array<Config>> 
     } catch (e) { }
   }
   if (!cleanDomainIPs.length) {
-    cleanDomainIPs = [url.hostname]
+    cleanDomainIPs = [MuddleDomain(url.hostname)]
   }
 
-  var address: string = cleanDomainIPs[Math.floor(Math.random() * cleanDomainIPs.length)]
+  let address: string = cleanDomainIPs[Math.floor(Math.random() * cleanDomainIPs.length)]
   for (const i in acceptableConfigList) {
     const el: any = acceptableConfigList[i]
     acceptableConfigList[i].mergedConfigs = el.configs
       .map((cnf: any) => MixConfig(cnf, url, address, el.name))
       .filter((cnf: any) => cnf?.merged && cnf?.name)
   }
-  var remaining: number = 0
-  for (var i: number = 0; i < 5; i++) {
+  let remaining: number = 0
+  for (let i: number = 0; i < 5; i++) {
     for (const el of acceptableConfigList) {
       if (el.count > el.mergedConfigs.length) {
         remaining = remaining + el.count - el.mergedConfigs.length
@@ -117,8 +115,8 @@ export async function GetConfigList(url: URL, env: Env): Promise<Array<Config>> 
   }
 
   if (includeOriginalConfigs) {
-    var remaining = 0
-    for (var i = 0; i < 5; i++) {
+    let remaining = 0
+    for (let i = 0; i < 5; i++) {
       for (const el of configList) {
         if (el.count > el.configs.length) {
           remaining = remaining + el.count - el.configs.length
@@ -143,9 +141,7 @@ export async function GetConfigList(url: URL, env: Env): Promise<Array<Config>> 
   }
 
   if (protocols.includes("vless")) {
-    finalConfigList = finalConfigList.concat(
-      await GetVlessConfigList(url.hostname, cleanDomainIPs, env)
-    )
+    finalConfigList = (await GetVlessConfigList(url.hostname, cleanDomainIPs, env)).concat(finalConfigList)
   }
 
   finalConfigList = finalConfigList.filter(ValidateConfig)
