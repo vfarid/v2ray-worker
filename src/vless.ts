@@ -1,6 +1,6 @@
 import { UUID } from "crypto";
 import { connect } from 'cloudflare:sockets'
-import { GetVlessConfig } from "./helpers"
+import { GetVlessConfig, MuddleDomain } from "./helpers"
 import { cfPorts } from "./variables"
 import { RemoteSocketWrapper, CustomArrayBuffer, VlessHeader, UDPOutbound, Config, Env } from "./interfaces"
 
@@ -8,15 +8,15 @@ const WS_READY_STATE_OPEN: number = 1
 const WS_READY_STATE_CLOSING: number = 2
 
 export async function GetVlessConfigList(sni: string, addressList: Array<string>, env: Env) {
-  const uuid: string | null = await env.settings.get("UUID")
-  var configList: Array<Config> = []
+  let uuid: string | null = await env.settings.get("UUID")
+  let configList: Array<Config> = []
   console.log(addressList)
   if (uuid) {
-    for (var i = 0; i < 10; i++) {
+    for (let i = 0; i < 20; i++) {
       configList.push(GetVlessConfig(
         i + 1,
         uuid as UUID,
-        sni,
+        MuddleDomain(sni),
         addressList[Math.floor(Math.random() * addressList.length)],
         cfPorts[Math.floor(Math.random() * cfPorts.length)]
       ))
@@ -28,21 +28,20 @@ export async function GetVlessConfigList(sni: string, addressList: Array<string>
 
 export async function VlessOverWSHandler(request: Request, env: Env) {
   const uuid: string = await env.settings.get("UUID") || ""
-	console.log(uuid)
 	const [client, webSocket]: Array<WebSocket> = Object.values(new WebSocketPair)
 
 	webSocket.accept()
 
-	var address: string = ""
-	var portWithRandomLog: string = ""
+	let address: string = ""
+	let portWithRandomLog: string = ""
 	const earlyDataHeader: string = request.headers.get("sec-websocket-protocol") || ""
 	const readableWebSocketStream = MakeReadableWebSocketStream(webSocket, earlyDataHeader)
 
-	var remoteSocketWapper: RemoteSocketWrapper = {
+	let remoteSocketWapper: RemoteSocketWrapper = {
 		value: null,
 	}
-	var udpStreamWrite: CallableFunction | null = null
-	var isDns = false
+	let udpStreamWrite: CallableFunction | null = null
+	let isDns = false
 
 	readableWebSocketStream.pipeTo(new WritableStream({
 		async write(chunk, controller) {
@@ -91,7 +90,7 @@ export async function VlessOverWSHandler(request: Request, env: Env) {
 				return
 			}
 
-			HandvarCPOutbound(remoteSocketWapper, addressRemote, portRemote, rawClientData, webSocket, vlessResponseHeader)
+			HandleCPOutbound(remoteSocketWapper, addressRemote, portRemote, rawClientData, webSocket, vlessResponseHeader)
 		}
 	})).catch((err) => { })
 
@@ -102,7 +101,7 @@ export async function VlessOverWSHandler(request: Request, env: Env) {
 }
 
 function MakeReadableWebSocketStream(webSocketServer: WebSocket, earlyDataHeader: string): ReadableStream {
-	var readableStreamCancel: boolean = false
+	let readableStreamCancel: boolean = false
 	const stream: ReadableStream = new ReadableStream({
 		start(controller) {
 			webSocketServer.addEventListener('message', (event) => {
@@ -154,8 +153,8 @@ function ProcessVlessHeader(vlessBuffer: ArrayBuffer, uuid: string): VlessHeader
 	}
 
 	const version: Uint8Array = new Uint8Array(vlessBuffer.slice(0, 1))
-	var isValidUser: boolean = false
-	var isUDP: boolean = false
+	let isValidUser: boolean = false
+	let isUDP: boolean = false
 	
   if (Stringify(new Uint8Array(vlessBuffer.slice(1, 17))) === uuid) {
 		isValidUser = true
@@ -188,15 +187,15 @@ function ProcessVlessHeader(vlessBuffer: ArrayBuffer, uuid: string): VlessHeader
 	const portBuffer: ArrayBuffer = vlessBuffer.slice(portIndex, portIndex + 2)
 	const portRemote: number = new DataView(portBuffer).getUint16(0)
 
-	var addressIndex: number = portIndex + 2
+	let addressIndex: number = portIndex + 2
 	const addressBuffer: Uint8Array = new Uint8Array(
 		vlessBuffer.slice(addressIndex, addressIndex + 1)
 	)
 
 	const addressType: number = addressBuffer[0]
-	var addressLength: number = 0
-	var addressValueIndex: number = addressIndex + 1
-	var addressValue: string = ""
+	let addressLength: number = 0
+	let addressValueIndex: number = addressIndex + 1
+	let addressValue: string = ""
 	
   switch (addressType) {
 		case 1:
@@ -220,7 +219,7 @@ function ProcessVlessHeader(vlessBuffer: ArrayBuffer, uuid: string): VlessHeader
 				vlessBuffer.slice(addressValueIndex, addressValueIndex + addressLength)
 			)
 			const ipv6: Array<string> = []
-			for (var i = 0; i < 8; i++) {
+			for (let i = 0; i < 8; i++) {
 				ipv6.push(dataView.getUint16(i * 2).toString(16))
 			}
 			addressValue = ipv6.join(":")
@@ -250,10 +249,10 @@ function ProcessVlessHeader(vlessBuffer: ArrayBuffer, uuid: string): VlessHeader
 }
 
 async function HandleUDPOutbound(webSocket: WebSocket, vlessResponseHeader: ArrayBuffer): Promise<UDPOutbound> {
-	var isVlessHeaderSent = false
+	let isVlessHeaderSent = false
 	const transformStream = new TransformStream({
 		transform(chunk, controller) {
-			for (var index: number = 0; index < chunk.byteLength;) {
+			for (let index: number = 0; index < chunk.byteLength;) {
 				const lengthBuffer = chunk.slice(index, index + 2)
 				const udpPakcetLength = new DataView(lengthBuffer).getUint16(0)
 				const udpData = new Uint8Array(
@@ -298,7 +297,7 @@ async function HandleUDPOutbound(webSocket: WebSocket, vlessResponseHeader: Arra
 	}
 }
 
-async function HandvarCPOutbound(remoteSocket: RemoteSocketWrapper, addressRemote: string, portRemote: number, rawClientData: Uint8Array, webSocket: WebSocket, vlessResponseHeader: Uint8Array): Promise<void> {
+async function HandleCPOutbound(remoteSocket: RemoteSocketWrapper, addressRemote: string, portRemote: number, rawClientData: Uint8Array, webSocket: WebSocket, vlessResponseHeader: Uint8Array): Promise<void> {
 	async function connectAndWrite(address: string, port: number) {
 		const tcpSocket: Socket = connect({
 			hostname: address,
@@ -324,8 +323,8 @@ async function HandvarCPOutbound(remoteSocket: RemoteSocketWrapper, addressRemot
 }
 
 async function RemoteSocketToWS(remoteSocket: Socket, webSocket: WebSocket, vlessResponseHeader: ArrayBuffer, retry: (() => Promise<void>) | null): Promise<void> {
-	var vlessHeader: ArrayBuffer | null = vlessResponseHeader
-	var hasIncomingData: boolean = false
+	let vlessHeader: ArrayBuffer | null = vlessResponseHeader
+	let hasIncomingData: boolean = false
 	await remoteSocket.readable
 		.pipeTo(
 			new WritableStream({
@@ -400,7 +399,7 @@ function Stringify(arr: Uint8Array, offset: number = 0): UUID {
 }
 
 const byteToHex: Array<string> = [];
-for (var i = 0; i < 256; ++i) {
+for (let i = 0; i < 256; ++i) {
 	byteToHex.push((i + 256).toString(16).slice(1));
 }
 
