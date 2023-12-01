@@ -4,7 +4,7 @@ import { Env } from "./interfaces"
 
 export async function GetLogin(request: Request, env: Env): Promise<Response> {
   const url: URL = new URL(request.url)
-  var htmlMessage = ""
+  let htmlMessage = ""
   const message = url.searchParams.get("message")
   if (message == "error") {
     htmlMessage = `<div class="p-3 bg-danger text-white fw-bold text-center">Invalid password / کلمه عبور معتبر نمی‌باشد!</div>`
@@ -53,7 +53,7 @@ export async function PostLogin(request: Request, env: Env): Promise<Response> {
   const url: URL = new URL(request.url)
   const formData = await request.formData()
   const password: string = formData.get("password") || ""
-  var hashedPassword: string = await env.settings.get("Password") || ""
+  let hashedPassword: string = await env.settings.get("Password") || ""
 
   await Delay(1000)
 
