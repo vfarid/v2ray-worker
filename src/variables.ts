@@ -1,10 +1,10 @@
 export const defaultProviders: Array<string> = [
+  "https://raw.githubusercontent.com/sashalsk/V2Ray/main/V2Config_64base",
 	"https://raw.githubusercontent.com/Leon406/SubCrawler/master/sub/share/vless",
   "https://raw.githubusercontent.com/mfuu/v2ray/master/clash.yaml",
   "https://raw.githubusercontent.com/peasoft/NoMoreWalls/master/list.yml",
   "https://raw.githubusercontent.com/a2470982985/getNode/main/clash.yaml",
   "https://raw.githubusercontent.com/mlabalabala/v2ray-node/main/nodefree4clash.txt",
-  "https://raw.githubusercontent.com/mlabalabala/v2ray-node/main/clashnode4clash.txt",
   "https://raw.githubusercontent.com/mahdibland/V2RayAggregator/master/sub/sub_merge.txt",
   "https://raw.githubusercontent.com/mfuu/v2ray/master/v2ray",
 ]
