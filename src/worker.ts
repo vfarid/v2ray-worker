@@ -1,5 +1,5 @@
 /*
- * V2RAY Worker v2.0
+ * V2RAY Worker v2.2
  * Copyright 2023 Vahid Farid (https://twitter.com/vahidfarid)
  * Licensed under GPLv3 (https://github.com/vfarid/v2ray-worker/blob/main/Licence.md)
  */
@@ -19,7 +19,6 @@ export default {
     const lcPath = path.toLowerCase()
     if (["sub", "clash"].includes(lcPath)) {
       const configList: Array<Config> = await GetConfigList(url, env)
-      // console.log(JSON.stringify(configList))
       if (lcPath == 'clash') {
         return new Response(ToYamlSubscription(configList));
       } else {
