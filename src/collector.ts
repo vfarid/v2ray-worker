@@ -150,7 +150,9 @@ export async function GetConfigList(url: URL, env: Env): Promise<Array<Config>> 
   
   if (alpnList.length) {
     finalConfigList = finalConfigList.map((conf: Config) => {
-      conf.alpn = alpnList[Math.floor(Math.random() * alpnList.length)]
+      if (["vless", "vmess"].includes(conf.type) && conf.security != "reality") {
+        conf.alpn = alpnList[Math.floor(Math.random() * alpnList.length)]
+      }
       return conf
     })
   }
