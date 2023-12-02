@@ -69,6 +69,15 @@ export function RemoveDuplicateConfigs(configList: Array<Config>): Array<Config>
   })
 }
 
+export function AddNumberToConfigs(configList: Array<Config>, start: number): Array<Config> {
+  const seen: { [key: string]: boolean } = {}
+
+  return configList.map((conf: Config, index: number) => {
+    conf.name = (index + start) + "-" + conf.name 
+    return conf
+  })
+}
+
 export function GenerateToken(length: number = 32): string {
   const buffer: Uint8Array = new Uint8Array(length)
   for (let i = 0; i < length; i++) {
