@@ -121,14 +121,14 @@ export function EncodeConfig(conf: Config): string {
         conf.server
       }:${
         conf.port
-      }?cipher=${
-        encodeURIComponent(conf.cipher || "none")
-      }&type=${
-        conf.type
+      }?type=${
+        conf.network
       }${
-        conf.path ? "&path=" + encodeURIComponent(conf.path) : ""
-      }&host=${
-        encodeURIComponent(conf.host || conf.server)
+        conf.cipher ? "&cipher=" + encodeURIComponent(conf.cipher) : ""
+      }${
+        conf.path ? "&path=" + conf.path : ""
+      }${
+        conf.host ? "&Host=" + conf.host : ""
       }${
         conf.alpn ? "&alpn=" + encodeURIComponent(conf.alpn) : ""
       }${
@@ -148,19 +148,15 @@ export function EncodeConfig(conf: Config): string {
       }@${
         conf.server
       }:${
-        conf.port
+        conf.port || "80"
       }?cipher=${
-        encodeURIComponent(conf.cipher || "none")
-      }&type=${
-        conf.type
+        conf.cipher || "none"
       }${
         conf.path ? "&path=" + encodeURIComponent(conf.path) : ""
       }${
         conf.host ? "&host=" + encodeURIComponent(conf.host) : ""
       }${
         conf.tfo ? "&tfo=1" : ""
-      }${
-        conf.servername ? "&sni=" + encodeURIComponent(conf.servername) : ""
       }${
         conf.obfs ? "&obfs=" + encodeURIComponent(conf.obfs) : ""
       }${
@@ -237,7 +233,7 @@ export function DecodeConfig(configStr: string): Config {
         servername: optionsObj.sni || "",
         network: optionsObj.type || (optionsObj.net || "tcp"),
         path: optionsObj.path || "",
-        host: optionsObj.host || "",
+        host: optionsObj.host || optionsObj.Host || "",
         alpn: optionsObj.alpn || "",
         fp: optionsObj.fp || "",
         pbk: optionsObj.pbk || "",
@@ -254,7 +250,7 @@ export function DecodeConfig(configStr: string): Config {
       // console.log(e, conf)
     }
 	}
-  console.log("OK", conf)
+  // console.log("OK", conf)
 	return conf
 }
 
