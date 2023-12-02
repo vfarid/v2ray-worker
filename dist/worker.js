@@ -3823,6 +3823,13 @@ function RemoveDuplicateConfigs(configList) {
     return false;
   });
 }
+function AddNumberToConfigs(configList, start) {
+  const seen = {};
+  return configList.map((conf, index) => {
+    conf.name = index + start + "-" + conf.name;
+    return conf;
+  });
+}
 function GenerateToken(length = 32) {
   const buffer = new Uint8Array(length);
   for (let i = 0; i < length; i++) {
@@ -7489,11 +7496,11 @@ function EncodeConfig(conf) {
       };
       return `${config.type}://${import_buffer.Buffer.from(JSON.stringify(config), "utf-8").toString("base64")}`;
     } else if (conf.type == "vless") {
-      return `${conf.type}://${conf.uuid || conf.password}@${conf.server}:${conf.port}?encryption=${encodeURIComponent(conf.cipher || "none")}&type=${conf.network || "tcp"}&path=${encodeURIComponent(conf.path || "")}&host=${encodeURIComponent(conf.host || conf.server)}${conf.alpn ? "&alpn=" + encodeURIComponent(conf.alpn) : ""}${conf.fp ? "&fp=" + encodeURIComponent(conf.fp) : ""}${conf.tls ? "&security=tls" : ""}&sni=${encodeURIComponent(conf.servername || conf.host || conf.server)}#${encodeURIComponent(conf.name)}`;
+      return `${conf.type}://${conf.uuid || conf.password}@${conf.server}:${conf.port}?encryption=${encodeURIComponent(conf.cipher || "none")}&type=${conf.network || "tcp"}${conf.path ? "&path=" + encodeURIComponent(conf.path) : ""}${conf.host ? "&host=" + encodeURIComponent(conf.host) : ""}${conf.security ? "&security=" + encodeURIComponent(conf.security) : ""}${conf.pbk ? "&pbk=" + encodeURIComponent(conf.pbk) : ""}${conf.headerType ? "&headerType=" + encodeURIComponent(conf.headerType) : ""}${conf.alpn ? "&alpn=" + encodeURIComponent(conf.alpn) : ""}${conf.fp ? "&fp=" + encodeURIComponent(conf.fp) : ""}${conf.tls ? "&security=tls" : ""}&sni=${encodeURIComponent(conf.servername || conf.host || conf.server)}#${encodeURIComponent(conf.name)}`;
     } else if (conf.type == "trojan") {
-      return `${conf.type}://${conf.password || conf.uuid}@${conf.server}:${conf.port}?cipher=${encodeURIComponent(conf.cipher || "none")}&type=${conf.type}${conf.path ? "&path=" + encodeURIComponent(conf.path) : ""}&host=${encodeURIComponent(conf.host || conf.server)}${conf.alpn ? "&alpn=" + encodeURIComponent(conf.alpn) : ""}${conf.fp ? "&fp=" + encodeURIComponent(conf.fp) : ""}${conf.tls ? "&tls=1" : ""}&sni=${encodeURIComponent(conf.servername || conf.host || conf.server)}#${encodeURIComponent(conf.name)}`;
+      return `${conf.type}://${conf.password || conf.uuid}@${conf.server}:${conf.port}?type=${conf.network}${conf.cipher ? "&cipher=" + encodeURIComponent(conf.cipher) : ""}${conf.path ? "&path=" + conf.path : ""}${conf.host ? "&Host=" + conf.host : ""}${conf.alpn ? "&alpn=" + encodeURIComponent(conf.alpn) : ""}${conf.fp ? "&fp=" + encodeURIComponent(conf.fp) : ""}${conf.tls ? "&tls=1" : ""}&sni=${encodeURIComponent(conf.servername || conf.host || conf.server)}#${encodeURIComponent(conf.name)}`;
     } else if (conf.type == "ss") {
-      return `${conf.type}://${conf.password || conf.uuid}@${conf.server}:${conf.port}?cipher=${encodeURIComponent(conf.cipher || "none")}&type=${conf.type}${conf.path ? "&path=" + encodeURIComponent(conf.path) : ""}${conf.host ? "&host=" + encodeURIComponent(conf.host) : ""}${conf.tfo ? "&tfo=1" : ""}${conf.servername ? "&sni=" + encodeURIComponent(conf.servername) : ""}${conf.obfs ? "&obfs=" + encodeURIComponent(conf.obfs) : ""}${conf.protocol ? "&protocol=" + encodeURIComponent(conf.protocol) : ""}${conf["protocol-param"] ? "&protocol-param=" + encodeURIComponent(conf["protocol-param"]) : ""}${conf["obfs-param"] ? "&obfs-param=" + encodeURIComponent(conf["obfs-param"]) : ""}#${encodeURIComponent(conf.name)}`;
+      return `${conf.type}://${conf.password || conf.uuid}@${conf.server}:${conf.port || "80"}?cipher=${conf.cipher || "none"}${conf.path ? "&path=" + encodeURIComponent(conf.path) : ""}${conf.host ? "&host=" + encodeURIComponent(conf.host) : ""}${conf.tfo ? "&tfo=1" : ""}${conf.obfs ? "&obfs=" + encodeURIComponent(conf.obfs) : ""}${conf.protocol ? "&protocol=" + encodeURIComponent(conf.protocol) : ""}${conf["protocol-param"] ? "&protocol-param=" + encodeURIComponent(conf["protocol-param"]) : ""}${conf["obfs-param"] ? "&obfs-param=" + encodeURIComponent(conf["obfs-param"]) : ""}#${encodeURIComponent(conf.name)}`;
     }
   } catch (e) {
   }
@@ -7531,7 +7538,7 @@ function DecodeConfig(configStr) {
       };
     } catch (e) {
     }
-  } else if (match = configStr.match(/^(?<type>trojan|vless):\/\/(?<id>.*)@(?<server>.*):(?<port>\d+)\??(?<options>.*)#(?<ps>.*)$/)) {
+  } else if ((match = configStr.match(/^(?<type>trojan|vless):\/\/(?<id>.*)@(?<server>.*):(?<port>\d+)\??(?<options>.*)#(?<ps>.*)$/)) && match.groups) {
     try {
       const optionsArr = match.groups.options.split("&") ?? [];
       const optionsObj = optionsArr.reduce((obj, option) => {
@@ -7540,25 +7547,28 @@ function DecodeConfig(configStr) {
         return obj;
       }, {});
       conf = {
-        name: match.groups?.ps,
-        server: match.groups?.server,
-        port: match.groups.port ?? 443,
+        name: match.groups.ps,
+        server: match.groups.server,
+        port: match.groups.port || 443,
         type: match.groups.type,
         uuid: match.groups.id,
-        alterId: conf.aid ?? 0,
+        alterId: optionsObj.aid || 0,
         cipher: "auto",
-        tls: (optionsObj.security ?? "none") == "tls",
+        security: optionsObj.security || "",
+        tls: (optionsObj.security || "none") == "tls",
         "skip-cert-verify": true,
-        servername: optionsObj?.sni,
-        network: optionsObj.type ?? (optionsObj.net ?? "tcp"),
-        path: optionsObj?.path,
-        host: optionsObj?.host,
-        alpn: optionsObj?.alpn,
-        fp: optionsObj?.fp || "randomized",
+        servername: optionsObj.sni || "",
+        network: optionsObj.type || (optionsObj.net || "tcp"),
+        path: optionsObj.path || "",
+        host: optionsObj.host || optionsObj.Host || "",
+        alpn: optionsObj.alpn || "",
+        fp: optionsObj.fp || "",
+        pbk: optionsObj.pbk || "",
+        headerType: optionsObj.headerType || "",
         "ws-opts": {
-          path: conf?.path || "",
+          path: optionsObj.path || "",
           headers: {
-            Host: conf?.host || conf?.sni
+            Host: optionsObj.host || optionsObj.sni
           }
         },
         udp: true
@@ -7597,10 +7607,15 @@ async function GetConfigList(url, env) {
   let settingsNotAvailable = true;
   try {
     maxConfigs = parseInt(await env.settings.get("MaxConfigs") || "200");
-    maxVlessConfigs = Math.ceil(maxConfigs / 20);
+    if (maxConfigs > 200) {
+      maxVlessConfigs = Math.ceil(maxConfigs / 20);
+    }
     protocols = await env.settings.get("Protocols").then((val) => {
       return val ? val.split("\n") : [];
     });
+    if (protocols.includes("vless")) {
+      maxConfigs = maxConfigs - maxVlessConfigs;
+    }
     providers = await env.settings.get("Providers").then((val) => {
       return val ? val.split("\n") : [];
     });
@@ -7645,13 +7660,15 @@ async function GetConfigList(url, env) {
         if (!newConfigs.length) {
           throw "no-yaml";
         }
-        newConfigs = newConfigs.filter(ValidateConfig);
+        newConfigs = newConfigs.filter((cnf) => protocols.includes(cnf.type)).filter(ValidateConfig);
       } catch (e) {
         if (IsBase64(content)) {
           content = import_buffer2.Buffer.from(content, "base64").toString("utf-8");
         }
-        newConfigs = content.split("\n").filter((cnf) => cnf.match(/^(vmess|vless|trojan|ss):\/\//i));
-        newConfigs = newConfigs.map(DecodeConfig).filter(ValidateConfig);
+        newConfigs = content.split("\n").filter((cnf) => cnf.match(new RegExp(`^(${protocols.join("|")})://`, "i")));
+        if (newConfigs.length) {
+          newConfigs = newConfigs.map(DecodeConfig).filter(ValidateConfig);
+        }
       }
       if (includeMergedConfigs) {
         acceptableConfigList.push({
@@ -7665,7 +7682,7 @@ async function GetConfigList(url, env) {
         configList.push({
           url: providerUrl,
           count: configPerList,
-          configs: newConfigs.filter((cnf) => protocols.includes(cnf.type))
+          configs: newConfigs
         });
       }
     } catch (e) {
@@ -7720,13 +7737,18 @@ async function GetConfigList(url, env) {
       myConfigs.map(DecodeConfig)
     );
   }
+  finalConfigList = RemoveDuplicateConfigs(finalConfigList.filter(ValidateConfig));
   if (protocols.includes("vless")) {
+    finalConfigList = AddNumberToConfigs(finalConfigList, maxVlessConfigs + 1);
     finalConfigList = (await GetVlessConfigList(url.hostname, cleanDomainIPs, maxVlessConfigs, env)).concat(finalConfigList);
+  } else {
+    finalConfigList = AddNumberToConfigs(finalConfigList, 1);
   }
-  finalConfigList = finalConfigList.filter(ValidateConfig);
   if (alpnList.length) {
     finalConfigList = finalConfigList.map((conf) => {
-      conf.alpn = alpnList[Math.floor(Math.random() * alpnList.length)];
+      if (["vless", "vmess"].includes(conf.type) && conf.security != "reality") {
+        conf.alpn = alpnList[Math.floor(Math.random() * alpnList.length)];
+      }
       return conf;
     });
   }
@@ -7736,7 +7758,7 @@ async function GetConfigList(url, env) {
       return conf;
     });
   }
-  return RemoveDuplicateConfigs(finalConfigList);
+  return finalConfigList;
 }
 
 // src/clash.ts
