@@ -31,6 +31,7 @@ export interface Config {
   password?: string,
   alterId?: number,
   cipher?: string,
+  security?: string,
   tls?: boolean,
   "skip-cert-verify"?: boolean,
   servername?: string,
@@ -46,6 +47,8 @@ export interface Config {
   "protocol-param"?: string,
   "obfs-param"?: string,
   tfo?: string,
+  pbk?: string,
+  headerType?: string,
   merged?: boolean,
 }
 
