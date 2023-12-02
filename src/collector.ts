@@ -2,7 +2,7 @@ import yaml from 'js-yaml'
 import { Buffer } from 'buffer'
 import { GetVlessConfigList } from './vless'
 import { MixConfig, ValidateConfig, DecodeConfig } from "./config"
-import { GetMultipleRandomElements, RemoveDuplicateConfigs, IsBase64, MuddleDomain } from "./helpers"
+import { GetMultipleRandomElements, RemoveDuplicateConfigs, AddNumberToConfigs, IsBase64, MuddleDomain } from "./helpers"
 import { defaultProviders, defaultProtocols, defaultALPNList, defaultPFList } from "./variables"
 import { Env, Config } from "./interfaces"
 
@@ -22,8 +22,13 @@ export async function GetConfigList(url: URL, env: Env): Promise<Array<Config>> 
 
   try {
     maxConfigs = parseInt(await env.settings.get("MaxConfigs") || "200")
-    maxVlessConfigs = Math.ceil(maxConfigs / 20)
+    if (maxConfigs > 200) {
+      maxVlessConfigs = Math.ceil(maxConfigs / 20)
+    }
     protocols = await env.settings.get("Protocols").then(val => {return val ? val.split("\n") : []})
+    if (protocols.includes("vless")) {
+      maxConfigs = maxConfigs - maxVlessConfigs
+    }
     providers = await env.settings.get("Providers").then(val => {return val ? val.split("\n") : []})
     alpnList = await env.settings.get("ALPNs").then(val => {return val ? val.split("\n") : []})
     fingerPrints = await env.settings.get("FingerPrints").then(val => {return val ? val.split("\n") : []})
@@ -62,13 +67,15 @@ export async function GetConfigList(url: URL, env: Env): Promise<Array<Config>> 
         if (!newConfigs.length) {
           throw "no-yaml"
         }
-        newConfigs = newConfigs.filter(ValidateConfig)
+        newConfigs = newConfigs.filter((cnf: any) => protocols.includes(cnf.type)).filter(ValidateConfig)
       } catch (e) {
         if (IsBase64(content)) {
           content = Buffer.from(content, "base64").toString("utf-8")
         }
-        newConfigs = content.split("\n").filter((cnf: string) => cnf.match(/^(vmess|vless|trojan|ss):\/\//i))
-        newConfigs = newConfigs.map(DecodeConfig).filter(ValidateConfig)
+        newConfigs = content.split("\n").filter((cnf: string) => cnf.match(new RegExp(`^(${protocols.join("|")}):\/\/`, "i")))
+        if (newConfigs.length) {
+          newConfigs = newConfigs.map(DecodeConfig).filter(ValidateConfig)
+        }
       }
       if (includeMergedConfigs) {
         acceptableConfigList.push({
@@ -82,7 +89,7 @@ export async function GetConfigList(url: URL, env: Env): Promise<Array<Config>> 
         configList.push({
           url: providerUrl,
           count: configPerList,
-          configs: newConfigs.filter((cnf: any) => protocols.includes(cnf.type)),
+          configs: newConfigs,
         })
       }
     } catch (e) { }
@@ -142,11 +149,14 @@ export async function GetConfigList(url: URL, env: Env): Promise<Array<Config>> 
     )
   }
 
-  if (protocols.includes("vless")) {
-    finalConfigList = (await GetVlessConfigList(url.hostname, cleanDomainIPs, maxVlessConfigs, env)).concat(finalConfigList)
-  }
+  finalConfigList = RemoveDuplicateConfigs(finalConfigList.filter(ValidateConfig))
 
-  finalConfigList = finalConfigList.filter(ValidateConfig)
+  if (protocols.includes("vless")) {
+    finalConfigList = AddNumberToConfigs(finalConfigList, maxVlessConfigs + 1)
+    finalConfigList = (await GetVlessConfigList(url.hostname, cleanDomainIPs, maxVlessConfigs, env)).concat(finalConfigList)
+  } else {
+    finalConfigList = AddNumberToConfigs(finalConfigList, 1)
+  }
   
   if (alpnList.length) {
     finalConfigList = finalConfigList.map((conf: Config) => {
@@ -164,5 +174,5 @@ export async function GetConfigList(url: URL, env: Env): Promise<Array<Config>> 
     })
   }
 
-  return RemoveDuplicateConfigs(finalConfigList)
+  return finalConfigList
 }
