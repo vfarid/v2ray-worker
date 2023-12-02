@@ -91,10 +91,16 @@ export function EncodeConfig(conf: Config): string {
         encodeURIComponent(conf.cipher || "none")
       }&type=${
         conf.network || "tcp"
-      }&path=${
-        encodeURIComponent(conf.path || "")
-      }&host=${
-        encodeURIComponent(conf.host || conf.server)
+      }${
+        conf.path ? "&path=" + encodeURIComponent(conf.path) : ""
+      }${
+        conf.host ? "&host=" + encodeURIComponent(conf.host) : ""
+      }${
+        conf.security ? "&security=" + encodeURIComponent(conf.security) : ""
+      }${
+        conf.pbk ? "&pbk=" + encodeURIComponent(conf.pbk) : ""
+      }${
+        conf.headerType ? "&headerType=" + encodeURIComponent(conf.headerType) : ""
       }${
         conf.alpn ? "&alpn=" + encodeURIComponent(conf.alpn) : ""
       }${
@@ -208,42 +214,47 @@ export function DecodeConfig(configStr: string): Config {
         udp: true,
       } as Config
     } catch (e) { }
-	} else if (match = configStr.match(/^(?<type>trojan|vless):\/\/(?<id>.*)@(?<server>.*):(?<port>\d+)\??(?<options>.*)#(?<ps>.*)$/)) {
+	} else if ((match = configStr.match(/^(?<type>trojan|vless):\/\/(?<id>.*)@(?<server>.*):(?<port>\d+)\??(?<options>.*)#(?<ps>.*)$/)) && match.groups) {
 	  try {
-		const optionsArr = match.groups.options.split('&') ?? []
-		const optionsObj = optionsArr.reduce((obj: Record<string, string>, option: string) => {
-		  const [key, value] = option.split('=')
-		  obj[key] = decodeURIComponent(value)
-		  return obj
-		}, {} as Record<string, string>)
-  
-    conf = {
-      name: match.groups?.ps,
-      server: match.groups?.server,
-      port: match.groups.port ?? 443,
-      type: match.groups.type,
-      uuid: match.groups.id,
-      alterId: conf.aid ?? 0,
-      cipher: "auto",
-      tls: (optionsObj.security ?? "none") == "tls",
-      "skip-cert-verify": true,
-      servername: optionsObj?.sni,
-      network: optionsObj.type ?? (optionsObj.net ?? "tcp"),
-      path: optionsObj?.path,
-      host: optionsObj?.host,
-		  alpn: optionsObj?.alpn,
-		  fp: optionsObj?.fp || "randomized",
-      "ws-opts": {
-        path: conf?.path || "",
-        headers: {
-          Host: conf?.host || conf?.sni,
-        }
-      },
-      udp: true,
-    } as Config
+      const optionsArr = match.groups.options.split('&') ?? []
+      const optionsObj = optionsArr.reduce((obj: Record<string, string>, option: string) => {
+        const [key, value] = option.split('=')
+        obj[key] = decodeURIComponent(value)
+        return obj
+      }, {} as Record<string, string>)
     
-	  } catch (e) { }
+      conf = {
+        name: match.groups.ps,
+        server: match.groups.server,
+        port: match.groups.port || 443,
+        type: match.groups.type,
+        uuid: match.groups.id,
+        alterId: optionsObj.aid || 0,
+        cipher: "auto",
+        security: optionsObj.security || "",
+        tls: (optionsObj.security || "none") == "tls",
+        "skip-cert-verify": true,
+        servername: optionsObj.sni || "",
+        network: optionsObj.type || (optionsObj.net || "tcp"),
+        path: optionsObj.path || "",
+        host: optionsObj.host || "",
+        alpn: optionsObj.alpn || "",
+        fp: optionsObj.fp || "",
+        pbk: optionsObj.pbk || "",
+        headerType: optionsObj.headerType || "",
+        "ws-opts": {
+          path: optionsObj.path || "",
+          headers: {
+            Host: optionsObj.host || optionsObj.sni,
+          }
+        },
+        udp: true,
+      } as Config
+	  } catch (e) {
+      // console.log(e, conf)
+    }
 	}
+  console.log("OK", conf)
 	return conf
 }
 
