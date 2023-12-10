@@ -1,20 +1,3 @@
-# V2Ray Worker
- Total solution for v2ray configs over Cloudflare's worker
-
-[نسخه فارسی](https://github.com/vfarid/v2ray-worker/blob/main/README-fa.md)
-
-## How to use
-
-To be completed...
-
-## Deploy 
- 1. Fork this Repo and enable Github Action
- 2. Open CloudFlare and create KV namespace with name `settings` then copy the ID
- 3. Go to this forked repo and set secrets with name `KV_NAME` and fill with KV settings ID
- 4. Edit this `README.md` file, then find and replace this button url bellow with yours `https://github.com/USER/REPO_NAME` then save it.
- 4. then press `Deploy With Workers` and follow the instruction
-
-[![Deploy to Cloudflare Workers](https://deploy.workers.cloudflare.com/button)](https://deploy.workers.cloudflare.com/?url=https://github.com/vfarid/v2ray-worker)
-
-### Credits
-Built-in vless config generator is based on [Zizifn Edge Tunnel](https://github.com/zizifn/edgetunnel), re-written using Typescript.
+<a href="https://deploy.workers.cloudflare.com/?url=https://github.com/vnodeVless/v2ray-worker" rel="nofollow">
+<img src="https://camo.githubusercontent.com/6eb04703e85da31c430de46d32a904a7c55c0b3bc00811ae689f14faf91cd32e/68747470733a2f2f6465706c6f792e776f726b6572732e636c6f7564666c6172652e636f6d2f627574746f6e" alt="Deploy to Cloudflare Workers" data-canonical-src="https://deploy.workers.cloudflare.com/button" style="max-width: 100%;">
+</a>
