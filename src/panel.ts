@@ -68,7 +68,8 @@ export async function GetPanel(request: Request, env: Env): Promise<Response> {
     <html>
     <head>
       <meta charset="utf8" />
-      <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.1/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-4bw+/aepP/YC94hEpVNVgiZdgIC5+VKNBQNGCHeKRQN+PtmoHDEXuppvnDJzQIu9" crossorigin="anonymous">
+      <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" integrity="sha384-T3c6CoIi6uLrA9TneNEoa7RxnatzjcDSCmG1MXxSR1GAsXEV/Dwwykc2MPK8M2HN" crossorigin="anonymous" rel="stylesheet" />
+      <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js" integrity="sha384-C6RzsynM9kWDrMNeT87bh95OGNyZPhcTNXj1NW7RuBCsyN/o0jlpcV8Qyq46cDfL" crossorigin="anonymous"></script>
     </head>
     <body dir="ltr">
       <div class="container border p-0">
@@ -151,8 +152,24 @@ export async function GetPanel(request: Request, env: Env): Promise<Response> {
               One IP or subdomain per line. / در هر سطر یک آی‌پی یا ساب‌دامین وارد کنید.
             </div>
             <div>
-              <a href="https://vfarid.github.io/cf-ip-scanner" target="_blank">Find Clean IP / جستجوی آی‌پی تمیز</a>
-            </div>
+              <button type="button" class="btn btn-info" data-bs-toggle="modal" data-bs-target="#ip-scanner-modal">
+                Find clean IPs / پیدا کردن آی‌پی تمیز
+              </button>
+              <div class="modal fade" id="ip-scanner-modal" tabindex="-1" aria-labelledby="ip-scanner-modal-label" aria-hidden="true">
+                <div class="modal-dialog modal-xl modal-dialog-scrollable">
+                  <div class="modal-content">
+                    <div class="modal-header">
+                      <button type="button" class="btn btn-sm btn-secondary" data-bs-dismiss="modal">
+                        Close / بستن  
+                      </button>
+                    </div>
+                    <div class="modal-body">
+                      <iframe src="https://vfarid.github.io/cf-ip-scanner/" style="width: 100%; height: 90vh;"></iframe>
+                    </div>
+                  </div>
+                </div>
+              </div>
+              </div>
           </div>
           <div class="mb-1 p-1">
             <label for="alpn-list" class="form-label fw-bold">
@@ -196,6 +213,11 @@ export async function GetPanel(request: Request, env: Env): Promise<Response> {
         </form>
       </div>
     </body>
+    <script>
+      window.addEventListener('message', function (event) {
+        document.getElementById('clean-ip').value = event.data;
+      });
+    </script>
     </html>
     `
   
