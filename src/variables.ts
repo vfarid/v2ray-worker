@@ -1,4 +1,5 @@
 export const defaultProviders: Array<string> = [
+	"https://raw.githubusercontent.com/mahdibland/V2RayAggregator/master/sub/list/00.txt",
   "https://raw.githubusercontent.com/sashalsk/V2Ray/main/V2Config_64base",
 	"https://raw.githubusercontent.com/Leon406/SubCrawler/master/sub/share/vless",
   "https://raw.githubusercontent.com/mfuu/v2ray/master/clash.yaml",
