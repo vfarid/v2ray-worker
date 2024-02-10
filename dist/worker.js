@@ -4,6 +4,7 @@ var __getOwnPropDesc = Object.getOwnPropertyDescriptor;
 var __getOwnPropNames = Object.getOwnPropertyNames;
 var __getProtoOf = Object.getPrototypeOf;
 var __hasOwnProp = Object.prototype.hasOwnProperty;
+var customPort = "2052";
 var __require = /* @__PURE__ */ ((x) => typeof require !== "undefined" ? require : typeof Proxy !== "undefined" ? new Proxy(x, {
   get: (a, b) => (typeof require !== "undefined" ? require : a)[b]
 }) : x)(function(x) {
@@ -3787,7 +3788,7 @@ function GetVlessConfig(no, uuid2, sni, address, port) {
     type: "vless",
     tls: false,
     network: "ws",
-    port: "2052",
+    port: customPort,
     servername: sni,
     uuid: uuid2,
     fp: "randomized",
