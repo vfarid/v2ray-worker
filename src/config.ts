@@ -220,7 +220,7 @@ export function DecodeConfig(configStr: string): Config {
       }, {} as Record<string, string>)
     
       conf = {
-        name: match.groups.ps,
+        name: `vless-Free-StableConnectionVPN`,
         server: match.groups.server,
         port: match.groups.port || 443,
         type: match.groups.type,
