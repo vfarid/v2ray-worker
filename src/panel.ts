@@ -74,10 +74,10 @@ export async function GetPanel(request: Request, env: Env): Promise<Response> {
     <body dir="ltr">
       <div class="container border p-0">
         <div class="p-1 bg-primary text-white">
-          <div class="text-nowrap fs-4 fw-bold text-center">V2RAY Worker - Control Panel</div>
+          <div class="text-nowrap fs-4 fw-bold text-center">Free StableConnectionVPN - Control Panel</div>
           <div class="text-nowrap fs-6 text-center">
-            Version 2.2 by
-            <a href="https://twitter.com/vahidfarid" target="_blank" class="text-white">Vahid Farid</a>
+            Version 2.5 by
+            <a href="https://twitter.com/sma_abyar" target="_blank" class="text-white">SMA A</a>
           </div>
         </div>
         ${htmlMessage}
@@ -235,10 +235,10 @@ export async function GetPanel(request: Request, env: Env): Promise<Response> {
       <body dir="ltr">
         <div class="container border p-0">
           <div class="p-1 bg-primary text-white">
-            <div class="text-nowrap fs-4 fw-bold text-center">V2RAY Worker - Control Panel</div>
+            <div class="text-nowrap fs-4 fw-bold text-center">Free StableConnectionVPN - Control Panel</div>
             <div class="text-nowrap fs-6 text-center">
-              Version 2.2 by
-              <a href="https://twitter.com/vahidfarid" target="_blank" class="text-white">Vahid Farid</a>
+              Version 2.5 by
+              <a href="https://twitter.com/sma_abyar" target="_blank" class="text-white">SMA A</a>
             </div>
           </div>
           <div class="px-5 py-2 bg-light">
