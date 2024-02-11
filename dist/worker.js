@@ -3788,7 +3788,7 @@ function GetVlessConfig(no, uuid2, sni, address, port) {
     type: "vless",
     tls: false,
     network: "ws",
-    port: customPort,
+    port,
     servername: sni,
     uuid: uuid2,
     fp: "randomized",
