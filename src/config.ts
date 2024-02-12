@@ -229,7 +229,7 @@ export function DecodeConfig(configStr: string): Config {
         cipher: "auto",
         security: optionsObj.security || "",
         tls: (optionsObj.security || "none") == "tls",
-        "skip-cert-verify": true,
+        "skip-cert-verify": false,
         servername: optionsObj.sni || "",
         network: optionsObj.type || (optionsObj.net || "tcp"),
         path: optionsObj.path || "",
