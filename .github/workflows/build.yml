@@ -1,0 +1,37 @@
+name: Build worker.js
+
+on:
+  push:
+  workflow_dispatch:
+    inputs:
+      XRAY_CORE_VERSION:
+        description: 'Xray core version or commit hash'
+        required: false
+
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+      
+    - name: Setup Node.js
+      uses: actions/setup-node@v3
+      with:
+        node-version: "latest"
+        cache: "npm"
+
+    - name: Install modules
+      run: npm i wrangler
+
+    - name: Build
+      run: npx wrangler build
+
+    - name: Upload worker.js
+      uses: actions/upload-artifact@v4
+      with:
+        name: worker
+        path: ${{ github.workspace }}/build/worker.js
+        
