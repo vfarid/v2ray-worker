@@ -9,3 +9,4 @@ node_modules/
 .old
 .wrangler
 package-lock.json
+package-lock.json
