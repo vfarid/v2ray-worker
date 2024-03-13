@@ -26,14 +26,20 @@ jobs:
       run: npx wrangler build
 
     - name: Add Header
-      run: echo -e "/*!\n  * v2ray Subscription Worker v1.6\n  * Copyright 2023 Vahid Farid (https://twitter.com/vahidfarid)\n  * Licensed under GPLv3 (https://github.com/vfarid/v2ray-worker-sub/blob/main/Licence.md)\n  */\n\n$(cat ${{ github.workspace }}/dist/worker.js)" > ${{ github.workspace }}/dist/worker.js
-
+      run: cp worker.js worker-original.js
+      run: echo -e "/*!\n  * v2ray Subscription Worker (${{ github.head_ref }}.${{ github.sha }})\n  * Copyright 2024 Vahid Farid (https://twitter.com/vahidfarid)\n  * Licensed under GPLv3 (https://github.com/vfarid/v2ray-worker/blob/main/Licence.md)\n  */\n\n$(cat ${{ github.workspace }}/dist/worker.js)" > ${{ github.workspace }}/dist/worker.js
+      
     - name: Upload to Artifacts
       uses: actions/upload-artifact@v4
       with:
         name: worker
         path: ${{ github.workspace }}/dist/worker.js
 
+    - name: Add Release Header
+      if: github.event_name == 'release'
+      with:
+        run: echo -e "/*!\n  * v2ray Subscription Worker ${{ github.event.release.tag_name }}\n  * Copyright 2024 Vahid Farid (https://twitter.com/vahidfarid)\n  * Licensed under GPLv3 (https://github.com/vfarid/v2ray-worker/blob/main/Licence.md)\n  */\n\n$(cat ${{ github.workspace }}/dist/worker-original.js)" > ${{ github.workspace }}/dist/worker.js
+      
     - name: Upload to GitHub Release
       uses: svenstaro/upload-release-action@v2
       if: github.event_name == 'release'
