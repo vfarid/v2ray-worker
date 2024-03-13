@@ -34,3 +34,4 @@ jobs:
       with:
         name: worker
         path: ${{ github.workspace }}/dist/worker.js
+        compression-level: 0
