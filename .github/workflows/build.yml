@@ -26,14 +26,13 @@ jobs:
       run: npx wrangler build
 
     - name: Add Header
-      run: echo "/*!\n  * v2ray Subscription Worker v1.6\n  * Copyright 2023 Vahid Farid (https://twitter.com/vahidfarid)\n  * Licensed under GPLv3 (https://github.com/vfarid/v2ray-worker-sub/blob/main/Licence.md)\n  */\n\n$(cat ${{ github.workspace }}/dist/worker.js)" > ${{ github.workspace }}/dist/worker.js
+      run: echo -e "/*!\n  * v2ray Subscription Worker v1.6\n  * Copyright 2023 Vahid Farid (https://twitter.com/vahidfarid)\n  * Licensed under GPLv3 (https://github.com/vfarid/v2ray-worker-sub/blob/main/Licence.md)\n  */\n\n$(cat ${{ github.workspace }}/dist/worker.js)" > ${{ github.workspace }}/dist/worker.js
 
     - name: Upload to Artifacts
       uses: actions/upload-artifact@v4
       with:
         name: worker
         path: ${{ github.workspace }}/dist/worker.js
-        compression-level: 0
 
     - name: Upload to GitHub Release
       uses: svenstaro/upload-release-action@v2
