@@ -33,4 +33,4 @@ jobs:
       uses: actions/upload-artifact@v4
       with:
         name: worker
-        path: ${{ github.workspace }}/build/worker.js
+        path: ${{ github.workspace }}/dist/worker.js
