@@ -1,13 +1,9 @@
 name: Build worker.js
-
 on:
   push:
-  workflow_dispatch:
-    inputs:
-      XRAY_CORE_VERSION:
-        description: 'Xray core version or commit hash'
-        required: false
-
+    branches: ["main"]
+  release:
+    types: ["published"]
 
 jobs:
   build:
@@ -29,9 +25,22 @@ jobs:
     - name: Build
       run: npx wrangler build
 
-    - name: Upload worker.js
+    - name: Add Header
+      run: echo "/*!\n  * v2ray Subscription Worker v1.6\n  * Copyright 2023 Vahid Farid (https://twitter.com/vahidfarid)\n  * Licensed under GPLv3 (https://github.com/vfarid/v2ray-worker-sub/blob/main/Licence.md)\n  */\n\n$(cat ${{ github.workspace }}/dist/worker.js)" > ${{ github.workspace }}/dist/worker.js
+
+    - name: Upload to Artifacts
       uses: actions/upload-artifact@v4
       with:
         name: worker
         path: ${{ github.workspace }}/dist/worker.js
         compression-level: 0
+
+    - name: Upload to GitHub Release
+      uses: svenstaro/upload-release-action@v2
+      if: github.event_name == 'release'
+      with:
+        repo_token: ${{ secrets.GITHUB_TOKEN }}
+        file: dist/worker.js
+        asset_name: worker.js
+        tag: ${{ github.ref }}
+        overwrite: true
