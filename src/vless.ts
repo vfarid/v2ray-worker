@@ -7,6 +7,7 @@ import { RemoteSocketWrapper, CustomArrayBuffer, VlessHeader, UDPOutbound, Confi
 const WS_READY_STATE_OPEN: number = 1
 const WS_READY_STATE_CLOSING: number = 2
 let uuid: string = ""
+let proxyIP: string = ""
 
 export async function GetVlessConfigList(sni: string, addressList: Array<string>, max: number, env: Env) {
   let uuid: string | null = await env.settings.get("UUID")
@@ -27,13 +28,19 @@ export async function GetVlessConfigList(sni: string, addressList: Array<string>
 }
 
 export async function VlessOverWSHandler(request: Request, env: Env) {
-  uuid = uuid || await env.settings.get("UUID") || ""
+    uuid = uuid || await env.settings.get("UUID") || ""
+	if (!proxyIP) {
+		let proxyIPList = (await env.settings.get("ProxyIPs"))?.split("\n") || []
+		if (proxyIPList.length) {
+			proxyIP = proxyIPList[Math.floor(Math.random() * proxyIPList.length)]
+		}
+	}
+
 	const [client, webSocket]: Array<WebSocket> = Object.values(new WebSocketPair)
 
 	webSocket.accept()
 
 	let address: string = ""
-	let portWithRandomLog: string = ""
 	const earlyDataHeader: string = request.headers.get("sec-websocket-protocol") || ""
 	const readableWebSocketStream = MakeReadableWebSocketStream(webSocket, earlyDataHeader)
 
@@ -66,13 +73,13 @@ export async function VlessOverWSHandler(request: Request, env: Env) {
 				isUDP,
 			} = ProcessVlessHeader(chunk, uuid)
 			
-      address = addressRemote
-			portWithRandomLog = `${portRemote}--${Math.random()} ${isUDP ? 'udp ' : 'tcp '} `
+      		address = addressRemote
+			
 			if (hasError) {
 				throw new Error(message)
 			}
 
-      if (isUDP) {
+      		if (isUDP) {
 				if (portRemote === 53) {
 					isDns = true
 				} else {
@@ -90,11 +97,11 @@ export async function VlessOverWSHandler(request: Request, env: Env) {
 				return
 			}
 
-			HandleCPOutbound(remoteSocketWapper, addressRemote, portRemote, rawClientData, webSocket, vlessResponseHeader)
+			HandleTCPOutbound(remoteSocketWapper, addressRemote, portRemote, rawClientData, webSocket, vlessResponseHeader)
 		}
 	})).catch((err) => { })
 
-	return new Response(null, {
+	return new Response(null,  {
 		status: 101,
 		webSocket: client,
 	})
@@ -267,14 +274,13 @@ async function HandleUDPOutbound(webSocket: WebSocket, vlessResponseHeader: Arra
 	// only handle dns udp for now
 	transformStream.readable.pipeTo(new WritableStream({
 		async write(chunk: any) {
-			const resp = await fetch('https://1.1.1.1/dns-query',
-				{
-					method: 'POST',
-					headers: {
-						'content-type': 'application/dns-message',
-					},
-					body: chunk,
-				})
+			const resp = await fetch('https://1.1.1.1/dns-query', {
+				method: 'POST',
+				headers: {
+					'content-type': 'application/dns-message',
+				},
+				body: chunk,
+			})
 			const dnsQueryResult: ArrayBuffer = await resp.arrayBuffer()
 			const udpSize: number = dnsQueryResult.byteLength
 			const udpSizeBuffer: Uint8Array = new Uint8Array([(udpSize >> 8) & 0xff, udpSize & 0xff])
@@ -297,12 +303,17 @@ async function HandleUDPOutbound(webSocket: WebSocket, vlessResponseHeader: Arra
 	}
 }
 
-async function HandleCPOutbound(remoteSocket: RemoteSocketWrapper, addressRemote: string, portRemote: number, rawClientData: Uint8Array, webSocket: WebSocket, vlessResponseHeader: Uint8Array): Promise<void> {
+async function HandleTCPOutbound(remoteSocket: RemoteSocketWrapper, addressRemote: string, portRemote: number, rawClientData: Uint8Array, webSocket: WebSocket, vlessResponseHeader: Uint8Array): Promise<void> {
 	async function connectAndWrite(address: string, port: number) {
-		const tcpSocket: Socket = connect({
+		const socketAddress: SocketAddress = {
 			hostname: address,
 			port: port,
-		})
+		}
+		const socketOptions: SocketOptions = {
+			allowHalfOpen: false,
+			// secureTransport: "starttls",
+		}
+		const tcpSocket: Socket = connect(socketAddress, socketOptions)//.startTls()
 		remoteSocket.value = tcpSocket
 		const writer: WritableStreamDefaultWriter<Uint8Array> = tcpSocket.writable.getWriter()
 		await writer.write(rawClientData)
@@ -311,7 +322,7 @@ async function HandleCPOutbound(remoteSocket: RemoteSocketWrapper, addressRemote
 	}
 
 	async function retry() {
-		const tcpSocket: Socket = await connectAndWrite(addressRemote, portRemote)
+		const tcpSocket: Socket = await connectAndWrite(proxyIP || addressRemote, portRemote)
 		tcpSocket.closed.catch((error: any) => { }).finally(() => {
 			SafeCloseWebSocket(webSocket)
 		})
@@ -341,12 +352,12 @@ async function RemoteSocketToWS(remoteSocket: Socket, webSocket: WebSocket, vles
 					}
 				},
 				abort(reason: any) {
-					console.error("remoteConnection!.readable abort", reason)
+					// console.error("remoteConnection!.readable abort", reason)
 				},
 			})
 		)
 		.catch((error) => {
-			console.error("remoteSocketToWS has exception ", error.stack || error)
+			// console.error("remoteSocketToWS has exception ", error.stack || error)
 			SafeCloseWebSocket(webSocket)
 		})
 
