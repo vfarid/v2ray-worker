@@ -26,7 +26,7 @@ jobs:
       run: npx wrangler build
 
     - name: Add Header
-      run: cp ${{ github.workspace }}/dist/worker.js ${{ github.workspace }}/dist/worker-original.js && echo -e "/*!\n  * v2ray Subscription Worker (${{ github.head_ref }}.${{ github.sha }})\n  * Copyright 2024 Vahid Farid (https://twitter.com/vahidfarid)\n  * Licensed under GPLv3 (https://github.com/vfarid/v2ray-worker/blob/main/Licence.md)\n  */\n\n$(cat ${{ github.workspace }}/dist/worker.js)" > ${{ github.workspace }}/dist/worker.js
+      run: cp ${{ github.workspace }}/dist/worker.js ${{ github.workspace }}/dist/worker-original.js && echo -e "/*!\n  * v2ray Subscription Worker (${{ github.sha }})\n  * Copyright 2024 Vahid Farid (https://twitter.com/vahidfarid)\n  * Licensed under GPLv3 (https://github.com/vfarid/v2ray-worker/blob/main/Licence.md)\n  */\n\n$(cat ${{ github.workspace }}/dist/worker.js)" > ${{ github.workspace }}/dist/worker.js
       
     - name: Upload to Artifacts
       uses: actions/upload-artifact@v4
@@ -42,7 +42,7 @@ jobs:
       if: github.event_name == 'release'
       with:
         repo_token: ${{ secrets.GITHUB_TOKEN }}
-        file: dist/worker.js
+        file: ${{ github.workspace }}/dist/worker.js
         asset_name: worker.js
         tag: ${{ github.ref }}
         overwrite: true
