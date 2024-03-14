@@ -1,9 +1,3 @@
-/*
- * V2RAY Worker v2.2
- * Copyright 2023 Vahid Farid (https://twitter.com/vahidfarid)
- * Licensed under GPLv3 (https://github.com/vfarid/v2ray-worker/blob/main/Licence.md)
- */
-
 import { VlessOverWSHandler } from "./vless"
 import { GetPanel, PostPanel } from "./panel"
 import { GetLogin, PostLogin } from "./auth"
@@ -11,6 +5,8 @@ import { GetConfigList } from "./collector"
 import { ToYamlSubscription } from "./clash"
 import { ToBase64Subscription } from "./sub"
 import { Env, Config } from "./interfaces"
+
+let panelPath = ""
 
 export default {
   async fetch(request: Request, env: Env): Promise<Response> {
@@ -32,12 +28,16 @@ export default {
       } else if (request.method === 'POST') {
         return PostLogin(request, env)
       }
+    } else if (lcPath == panelPath) {
+      if (request.method === 'GET') {
+        return GetPanel(request, env)
+      } else if (request.method === 'POST') {
+        return PostPanel(request, env)
+      }
     } else if (path) {
       return fetch(new Request(new URL("https://" + path), request))
-    } else if (request.method === 'GET') {
-      return GetPanel(request, env)
-    } else if (request.method === 'POST') {
-      return PostPanel(request, env)
+    } else {
+      return fetch('https://www.randomurbanshop.ro')
     }
     return new Response('Invalid request!');
   }
