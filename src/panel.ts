@@ -1,7 +1,7 @@
 import * as bcrypt from 'bcryptjs'
 import { v4 as uuidv4 } from "uuid"
 import { IsValidUUID, GenerateToken } from "./helpers"
-import { defaultProviders, defaultProtocols, defaultALPNList, defaultPFList } from "./variables"
+import { version, defaultProviders, defaultProtocols, defaultALPNList, defaultPFList } from "./variables"
 import { Env } from "./interfaces"
 
 export async function GetPanel(request: Request, env: Env): Promise<Response> {
@@ -46,7 +46,10 @@ export async function GetPanel(request: Request, env: Env): Promise<Response> {
       `
     } else {
       passwordSection = `
-      <div class="mb-3 p-1 bg-warning">
+      <div class="mb-1 p-1 pb-0 pt-3 mt-3 border-top border-primary border-4">
+        <label for="configs" class="form-label fw-bold"> Security&nbsp;</label>
+      </div>
+      <div class="mb-3 p-3 border rounded">
         <label for="password" class="form-label fw-bold">
           Enter password, if you want to protect panel / در صورتی که میخواهید از پنل محافظت کنید، یک کلمه‌ی عبور وارد کنید:
         </label>
@@ -72,12 +75,16 @@ export async function GetPanel(request: Request, env: Env): Promise<Response> {
       <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js" integrity="sha384-C6RzsynM9kWDrMNeT87bh95OGNyZPhcTNXj1NW7RuBCsyN/o0jlpcV8Qyq46cDfL" crossorigin="anonymous"></script>
     </head>
     <body dir="ltr">
-      <div class="container border p-0">
-        <div class="p-1 bg-primary text-white">
-          <div class="text-nowrap fs-4 fw-bold text-center">V2RAY Worker - Control Panel</div>
-          <div class="text-nowrap fs-6 text-center">
-            Version 2.2 by
-            <a href="https://twitter.com/vahidfarid" target="_blank" class="text-white">Vahid Farid</a>
+      <div class="container border mt-3 p-0 border-primary border-2 rounded">
+        <div class="p-1 border-bottom border-primary border-2">
+          <div class="btn-group float-end" role="group" dir="ltr">
+            <button id="btn-fa" class="btn btn-lang btn-outline-primary btn-sm rounded-2" type="button">FA</button>&nbsp;
+            <button id="btn-en" class="btn btn-lang btn-outline-primary btn-sm rounded-2" type="button">EN</button>&nbsp;
+            <button id="btn-cn" class="btn btn-lang btn-outline-primary btn-sm rounded-2" type="button">CN</button>
+          </div>
+          <div class="text-nowrap fs-4 fw-bold text-center">
+            V2RAY Worker - Control Panel
+            <span class="text-nowrap fs-6">Version ${version}</span>
           </div>
         </div>
         ${htmlMessage}
@@ -211,7 +218,25 @@ export async function GetPanel(request: Request, env: Env): Promise<Response> {
           <button type="submit" name="save" value="save" class="btn btn-primary">Save / ذخیره</button>
           <button type="submit" name="reset" value="reset" class="btn btn-warning">Reset / بازنشانی</button>
         </form>
+        <div class="p-1 border-top border-3 border-primary">
+          <div class="text-nowrap fs-6 text-center">
+            <p>Copyright 2024 Vahid Farid</p>
+            <p>
+              <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 16 16" fill="none" role="img" aria-labelledby="adq21vs9ev27hns9d9vc987q0rsniw8u" class="octicon"><title id="adq21vs9ev27hns9d9vc987q0rsniw8u">X</title>
+                <g clip-path="url(#clip0_1668_3024)">
+                  <path d="M9.52217 6.77143L15.4785 0H14.0671L8.89516 5.87954L4.76437 0H0L6.24656 8.8909L0 15.9918H1.41155L6.87321 9.78279L11.2356 15.9918H16L9.52183 6.77143H9.52217ZM7.58887 8.96923L6.95596 8.0839L1.92015 1.03921H4.0882L8.15216 6.7245L8.78507 7.60983L14.0677 14.9998H11.8997L7.58887 8.96957V8.96923Z" fill="currentColor"></path>
+                </g>
+                <defs>
+                  <clipPath id="clip0_1668_3024">
+                    <rect width="16" height="16" fill="white"></rect>
+                  </clipPath>
+                </defs>
+              </svg>
+              <a rel="nofollow me" class="Link--primary" href="https://twitter.com/vahidfarid">@vahidfarid</a>
+            </p>
+          </div>
       </div>
+  </div>
     </body>
     <script>
       window.addEventListener('message', function (event) {
@@ -237,7 +262,7 @@ export async function GetPanel(request: Request, env: Env): Promise<Response> {
           <div class="p-1 bg-primary text-white">
             <div class="text-nowrap fs-4 fw-bold text-center">V2RAY Worker - Control Panel</div>
             <div class="text-nowrap fs-6 text-center">
-              Version 2.2 by
+              Version ${version} by
               <a href="https://twitter.com/vahidfarid" target="_blank" class="text-white">Vahid Farid</a>
             </div>
           </div>
