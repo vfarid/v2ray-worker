@@ -8,5 +8,5 @@ node_modules/
 # other
 .old
 .wrangler
-package-lock.json
+dist/
 package-lock.json
