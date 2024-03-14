@@ -6,6 +6,6 @@ function getString(id) {
     return id
 }
 
-document.addEventListener("load", (event) => {
+window.addEventListener("load", (event) => {
     alert("Loaded!")
 })
