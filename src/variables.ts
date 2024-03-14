@@ -1,3 +1,5 @@
+export const version: string = "2.3"
+
 export const defaultProviders: Array<string> = [
 	"https://raw.githubusercontent.com/mahdibland/V2RayAggregator/master/sub/list/00.txt",
   "https://raw.githubusercontent.com/sashalsk/V2Ray/main/V2Config_64base",
