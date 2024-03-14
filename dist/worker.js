@@ -1,9 +1,3 @@
-/*
- * V2RAY Worker v2.2
- * Copyright 2023 Vahid Farid (https://twitter.com/vahidfarid)
- * Licensed under GPLv3 (https://github.com/vfarid/v2ray-worker/blob/main/Licence.md)
- */
-
 var __create = Object.create;
 var __defProp = Object.defineProperty;
 var __getOwnPropDesc = Object.getOwnPropertyDescriptor;
@@ -3853,6 +3847,7 @@ function MuddleDomain(hostname) {
 // src/variables.ts
 init_modules_watch_stub();
 var defaultProviders = [
+  "https://raw.githubusercontent.com/mahdibland/V2RayAggregator/master/sub/list/00.txt",
   "https://raw.githubusercontent.com/sashalsk/V2Ray/main/V2Config_64base",
   "https://raw.githubusercontent.com/Leon406/SubCrawler/master/sub/share/vless",
   "https://raw.githubusercontent.com/mfuu/v2ray/master/clash.yaml",
@@ -3943,6 +3938,7 @@ var defaultClashConfig = {
 var WS_READY_STATE_OPEN = 1;
 var WS_READY_STATE_CLOSING = 2;
 var uuid = "";
+var proxyIP = "";
 async function GetVlessConfigList(sni, addressList, max, env) {
   let uuid2 = await env.settings.get("UUID");
   let configList = [];
@@ -3961,10 +3957,15 @@ async function GetVlessConfigList(sni, addressList, max, env) {
 }
 async function VlessOverWSHandler(request, env) {
   uuid = uuid || await env.settings.get("UUID") || "";
+  if (!proxyIP) {
+    let proxyIPList = (await env.settings.get("ProxyIPs"))?.split("\n") || [];
+    if (proxyIPList.length) {
+      proxyIP = proxyIPList[Math.floor(Math.random() * proxyIPList.length)];
+    }
+  }
   const [client, webSocket] = Object.values(new WebSocketPair());
   webSocket.accept();
   let address = "";
-  let portWithRandomLog = "";
   const earlyDataHeader = request.headers.get("sec-websocket-protocol") || "";
   const readableWebSocketStream = MakeReadableWebSocketStream(webSocket, earlyDataHeader);
   let remoteSocketWapper = {
@@ -3994,7 +3995,6 @@ async function VlessOverWSHandler(request, env) {
         isUDP
       } = ProcessVlessHeader(chunk, uuid);
       address = addressRemote;
-      portWithRandomLog = `${portRemote}--${Math.random()} ${isUDP ? "udp " : "tcp "} `;
       if (hasError) {
         throw new Error(message);
       }
@@ -4013,7 +4013,7 @@ async function VlessOverWSHandler(request, env) {
         udpStreamWrite(rawClientData);
         return;
       }
-      HandleCPOutbound(remoteSocketWapper, addressRemote, portRemote, rawClientData, webSocket, vlessResponseHeader);
+      HandleTCPOutbound(remoteSocketWapper, addressRemote, portRemote, rawClientData, webSocket, vlessResponseHeader);
     }
   })).catch((err) => {
   });
@@ -4169,16 +4169,13 @@ async function HandleUDPOutbound(webSocket, vlessResponseHeader) {
   });
   transformStream.readable.pipeTo(new WritableStream({
     async write(chunk) {
-      const resp = await fetch(
-        "https://1.1.1.1/dns-query",
-        {
-          method: "POST",
-          headers: {
-            "content-type": "application/dns-message"
-          },
-          body: chunk
-        }
-      );
+      const resp = await fetch("https://1.1.1.1/dns-query", {
+        method: "POST",
+        headers: {
+          "content-type": "application/dns-message"
+        },
+        body: chunk
+      });
       const dnsQueryResult = await resp.arrayBuffer();
       const udpSize = dnsQueryResult.byteLength;
       const udpSizeBuffer = new Uint8Array([udpSize >> 8 & 255, udpSize & 255]);
@@ -4200,12 +4197,17 @@ async function HandleUDPOutbound(webSocket, vlessResponseHeader) {
     }
   };
 }
-async function HandleCPOutbound(remoteSocket, addressRemote, portRemote, rawClientData, webSocket, vlessResponseHeader) {
+async function HandleTCPOutbound(remoteSocket, addressRemote, portRemote, rawClientData, webSocket, vlessResponseHeader) {
   async function connectAndWrite(address, port) {
-    const tcpSocket2 = connect({
+    const socketAddress = {
       hostname: address,
       port
-    });
+    };
+    const socketOptions = {
+      allowHalfOpen: false
+      // secureTransport: "starttls",
+    };
+    const tcpSocket2 = connect(socketAddress, socketOptions);
     remoteSocket.value = tcpSocket2;
     const writer = tcpSocket2.writable.getWriter();
     await writer.write(rawClientData);
@@ -4213,7 +4215,7 @@ async function HandleCPOutbound(remoteSocket, addressRemote, portRemote, rawClie
     return tcpSocket2;
   }
   async function retry() {
-    const tcpSocket2 = await connectAndWrite(addressRemote, portRemote);
+    const tcpSocket2 = await connectAndWrite(proxyIP || addressRemote, portRemote);
     tcpSocket2.closed.catch((error) => {
     }).finally(() => {
       SafeCloseWebSocket(webSocket);
@@ -4241,11 +4243,9 @@ async function RemoteSocketToWS(remoteSocket, webSocket, vlessResponseHeader, re
         }
       },
       abort(reason) {
-        console.error("remoteConnection!.readable abort", reason);
       }
     })
   ).catch((error) => {
-    console.error("remoteSocketToWS has exception ", error.stack || error);
     SafeCloseWebSocket(webSocket);
   });
   if (hasIncomingData === false && retry) {
@@ -4421,7 +4421,8 @@ async function GetPanel(request, env) {
     <html>
     <head>
       <meta charset="utf8" />
-      <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.1/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-4bw+/aepP/YC94hEpVNVgiZdgIC5+VKNBQNGCHeKRQN+PtmoHDEXuppvnDJzQIu9" crossorigin="anonymous">
+      <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" integrity="sha384-T3c6CoIi6uLrA9TneNEoa7RxnatzjcDSCmG1MXxSR1GAsXEV/Dwwykc2MPK8M2HN" crossorigin="anonymous" rel="stylesheet" />
+      <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js" integrity="sha384-C6RzsynM9kWDrMNeT87bh95OGNyZPhcTNXj1NW7RuBCsyN/o0jlpcV8Qyq46cDfL" crossorigin="anonymous"><\/script>
     </head>
     <body dir="ltr">
       <div class="container border p-0">
@@ -4504,8 +4505,24 @@ async function GetPanel(request, env) {
               One IP or subdomain per line. / \u062F\u0631 \u0647\u0631 \u0633\u0637\u0631 \u06CC\u06A9 \u0622\u06CC\u200C\u067E\u06CC \u06CC\u0627 \u0633\u0627\u0628\u200C\u062F\u0627\u0645\u06CC\u0646 \u0648\u0627\u0631\u062F \u06A9\u0646\u06CC\u062F.
             </div>
             <div>
-              <a href="https://vfarid.github.io/cf-ip-scanner" target="_blank">Find Clean IP / \u062C\u0633\u062A\u062C\u0648\u06CC \u0622\u06CC\u200C\u067E\u06CC \u062A\u0645\u06CC\u0632</a>
-            </div>
+              <button type="button" class="btn btn-info" data-bs-toggle="modal" data-bs-target="#ip-scanner-modal">
+                Find clean IPs / \u067E\u06CC\u062F\u0627 \u06A9\u0631\u062F\u0646 \u0622\u06CC\u200C\u067E\u06CC \u062A\u0645\u06CC\u0632
+              </button>
+              <div class="modal fade" id="ip-scanner-modal" tabindex="-1" aria-labelledby="ip-scanner-modal-label" aria-hidden="true">
+                <div class="modal-dialog modal-xl modal-dialog-scrollable">
+                  <div class="modal-content">
+                    <div class="modal-header">
+                      <button type="button" class="btn btn-sm btn-secondary" data-bs-dismiss="modal">
+                        Close / \u0628\u0633\u062A\u0646  
+                      </button>
+                    </div>
+                    <div class="modal-body">
+                      <iframe src="https://vfarid.github.io/cf-ip-scanner/" style="width: 100%; height: 90vh;"></iframe>
+                    </div>
+                  </div>
+                </div>
+              </div>
+              </div>
           </div>
           <div class="mb-1 p-1">
             <label for="alpn-list" class="form-label fw-bold">
@@ -4549,6 +4566,11 @@ async function GetPanel(request, env) {
         </form>
       </div>
     </body>
+    <script>
+      window.addEventListener('message', function (event) {
+        document.getElementById('clean-ip').value = event.data;
+      });
+    <\/script>
     </html>
     `;
     return new Response(htmlContent, {
