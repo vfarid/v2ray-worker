@@ -1,5 +1,6 @@
 import { UUID } from "crypto"
 import { Config } from "./interfaces"
+import { providersUri, proxiesUri } from "./variables"
 
 export function GetMultipleRandomElements(arr: Array<any>, num: number): Array<any> {
 	let shuffled = arr.sort(() => 0.5 - Math.random())
@@ -100,4 +101,12 @@ export function MuddleDomain(hostname: string): string {
   ).join("")
   
   return subdomain + "." + muddledDomain
+}
+
+export async function getDefaultProviders(): Promise<Array<string>> {
+	return fetch(providersUri).then(r => r.text()).then(t => t.trim().split("\n"))
+}
+
+export async function getDefaultProxies(): Promise<Array<string>> {
+	return fetch(proxiesUri).then(r => r.text()).then(t => t.trim().split("\n"))
 }
