@@ -18,3 +18,4 @@ To be completed...
 
 ### Credits
 Built-in vless config generator is based on [Zizifn Edge Tunnel](https://github.com/zizifn/edgetunnel), re-written using Typescript.
+Proxy IPs source: https://rentry.co/CF-proxyIP
