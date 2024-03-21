@@ -1,7 +1,7 @@
 import * as bcrypt from 'bcryptjs'
 import { v4 as uuidv4 } from "uuid"
-import { IsValidUUID, GenerateToken } from "./helpers"
-import { version, defaultProviders, defaultProtocols, defaultALPNList, defaultPFList } from "./variables"
+import { IsValidUUID, GenerateToken, getDefaultProviders, getDefaultProxies } from "./helpers"
+import { version, defaultProtocols, defaultALPNList, defaultPFList } from "./variables"
 import { Env } from "./interfaces"
 
 export async function GetPanel(request: Request, env: Env): Promise<Response> {
@@ -18,11 +18,15 @@ export async function GetPanel(request: Request, env: Env): Promise<Response> {
     const protocols: Array<string> = (await env.settings.get("Protocols"))?.split("\n") || defaultProtocols
     const alpnList: Array<string> = (await env.settings.get("ALPNs"))?.split("\n") || defaultALPNList
     const fingerPrints: Array<string> = (await env.settings.get("FingerPrints"))?.split("\n") || defaultPFList
-    const providers: Array<string> = (await env.settings.get("Providers"))?.split("\n") || defaultProviders
     const cleanDomainIPs: Array<string> = (await env.settings.get("CleanDomainIPs"))?.split("\n") || []
     const configs: Array<string> = (await env.settings.get("Configs"))?.split("\n") || []
     const includeOriginalConfigs: string = await env.settings.get("IncludeOriginalConfigs") || "yes"
     const includeMergedConfigs: string = await env.settings.get("IncludeMergedConfigs") || "yes"
+    const autoLoadProviders: string = (await env.settings.get("AutoLoadProviders")) || "yes"
+    const providers = (await env.settings.get("Providers"))?.trim().split("\n") || []
+    const autoLoadProxies: string = (await env.settings.get("AutoLoadProxies")) || "yes"
+    const proxies = (await env.settings.get("Proxies"))?.trim().split("\n") || []
+
     var uuid: string = await env.settings.get("UUID") || ""
     if (!IsValidUUID(uuid)) {
       uuid = uuidv4()
@@ -74,13 +78,9 @@ export async function GetPanel(request: Request, env: Env): Promise<Response> {
       <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" integrity="sha384-T3c6CoIi6uLrA9TneNEoa7RxnatzjcDSCmG1MXxSR1GAsXEV/Dwwykc2MPK8M2HN" crossorigin="anonymous" rel="stylesheet" />
       <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js" integrity="sha384-C6RzsynM9kWDrMNeT87bh95OGNyZPhcTNXj1NW7RuBCsyN/o0jlpcV8Qyq46cDfL" crossorigin="anonymous"></script>
     </head>
-    <body dir="ltr" style="--bs-body-font-size: .875rem">
+    <body id="body" style="--bs-body-font-size: .875rem">
       <div class="container border mt-3 p-0 border-primary border-2 rounded">
-        <div class="btn-group float-end m-2" role="group" dir="ltr">
-          <button id="btn-fa" class="btn btn-lang btn-outline-primary btn-sm rounded-2" type="button">FA</button>&nbsp;
-          <button id="btn-en" class="btn btn-lang btn-outline-primary btn-sm rounded-2" type="button">EN</button>&nbsp;
-          <button id="btn-cn" class="btn btn-lang btn-outline-primary btn-sm rounded-2" type="button">CN</button>
-        </div>
+        <div id="lang-group" class="btn-group float-end m-2" role="group" dir="ltr"></div>
         <div class="p-2 border-bottom border-primary border-2">
           <div class="text-nowrap fs-5 fw-bold text-dark">
             V2RAY Worker - Control Panel &nbsp;&nbsp;<span class="text-nowrap fs-6 text-info">Version ${version}</span>
@@ -88,11 +88,15 @@ export async function GetPanel(request: Request, env: Env): Promise<Response> {
         </div>
         ${htmlMessage}
         <div class="px-4 py-2 bg-light">
-          <label for="sub-link" class="form-label fw-bold">
-            Your subscription link for v2ray clients/ <span dir="rtl">لینک ثبت نام شما برای کلاینت‌های v2ray</span>
-            (v2rayN, v2rayNG, v2rayA, Matsuri, Nekobox, Nekoray...)
-          </label>
+          <label id="sub-link-title" for="sub-link" class="form-label fw-bold"></label>
           <input id="sub-link" readonly value="https://${url.hostname}/sub" class="p-1" style="width: calc(100% - 150px)">
+          <button onclick="var tmp=document.getElementById('sub-link');tmp.select();tmp.setSelectionRange(0,99999);navigator.clipboard.writeText(tmp.value)" class="btn btn-primary p-1 mb-1">Copy</button>
+        </div>
+        <div class="px-4 py-2 bg-light">
+          <label for="sub-link" class="form-label fw-bold">
+            Your subscription link for custom configs / <span dir="rtl">لینک ثبت نام شما در قالب custom</span>
+          </label>
+          <input id="sub-link" readonly value="https://${url.hostname}/custom" class="p-1" style="width: calc(100% - 150px)">
           <button onclick="var tmp=document.getElementById('sub-link');tmp.select();tmp.setSelectionRange(0,99999);navigator.clipboard.writeText(tmp.value)" class="btn btn-primary p-1 mb-1">Copy</button>
         </div>
         <div class="px-4 py-2 bg-light">
@@ -103,7 +107,7 @@ export async function GetPanel(request: Request, env: Env): Promise<Response> {
           <input id="clash-link" readonly value="https://${url.hostname}/clash" class="p-1" style="width: calc(100% - 150px)">
           <button onclick="var tmp=document.getElementById('clash-link');tmp.select();tmp.setSelectionRange(0,99999);navigator.clipboard.writeText(tmp.value)" class="btn btn-primary p-1 mb-1">Copy</button>
         </div>
-        <form class="px-4 py-4 border-top" method="post">
+        <form class="px-4 py-4 border-top border-2 border-primary" method="post">
           <div class="mb-1 p-1">
             <label for="includes" class="form-label fw-bold">
               Merged and original configs / کانفیگ‌های اصلی و ترکیبی:
@@ -241,9 +245,76 @@ export async function GetPanel(request: Request, env: Env): Promise<Response> {
       </div>
     </body>
     <script>
-      window.addEventListener('message', function (event) {
-        document.getElementById('clean-ip').value = event.data;
-      });
+    let language = localStorage.getItem("lang") || "fa"
+    window.addEventListener("load", (event) => {
+      initLang();
+      setLang(language);
+    });
+    window.addEventListener('message', function (event) {
+      document.getElementById('clean-ip').value = event.data;
+    });
+
+    function initLang() {
+      document.getElementById("lang-group").innerHTML = ""
+      for (code in strings) {
+        const el = document.createElement("button")
+        el.classList = "btn btn-outline-primary btn-sm rounded-2"
+        el.id = \`btn-\${code}\`
+        el.type = "button"
+        el.innerText = code.toUpperCase()
+        el.setAttribute("data-lang", code);
+        el.addEventListener("click", (e) => {
+            setLang(e.srcElement.getAttribute("data-lang"))
+        })
+        document.getElementById("lang-group").appendChild(el)
+
+        const el2 = document.createElement("span")
+        el2.innerHTML = "&nbsp;"
+        document.getElementById("lang-group").appendChild(el2)
+      }
+    }
+  
+    function setLang(code) {
+      if (strings[code] === undefined) {
+        code = "en"
+      }
+      document.getElementById('body').style.direction = directions[code] || "ltr"
+      document.getElementById('btn-' + language).classList.remove('btn-primary')
+      document.getElementById('btn-' + language).classList.add('btn-outline-primary')
+      document.getElementById('btn-' + code).classList.remove('btn-outline-primary')
+      document.getElementById('btn-' + code).classList.add('btn-primary')
+      
+      for (key in strings[code]) {
+        document.getElementById(key).innerText = strings[code][key]
+      }
+  
+      language = code
+      localStorage.setItem('lang', code);
+    }
+
+    const directions = {
+      en: "ltr",
+      fa: "rtl",
+    }
+  
+    const strings = {
+      en: {
+          "page-title": "V2ray Worker",
+          "sub-link-title": "Your subscription link for v2ray clients (v2rayN, v2rayNG, v2rayA, Matsuri, Nekobox, Nekoray...)",
+          "account-id-title": "Account ID",
+          "api-token-title": "API Token",
+          "deploy-title": "Deploy Worker",
+          "save-settings-label": "Save setting on current device for future use"
+      },
+      fa: {
+          "page-title": "ورکر v2ray",
+          "sub-link-title": "لینک ثبت نام شما برای کلاینت‌های v2ray (v2rayN, v2rayNG, v2rayA, Matsuri, Nekobox, Nekoray...)",
+          "account-id-title": "شناسه اکانت",
+          "api-token-title": "توکن API",
+          "deploy-title": "استقرار ورکر",
+          "save-settings-label": "ذخیره اطلاعات روی دستگاه فعلی برای استفاده‌های بعدی",
+      },
+    }
     </script>
     </html>
     `
@@ -259,45 +330,43 @@ export async function GetPanel(request: Request, env: Env): Promise<Response> {
         <meta charset="utf8" />
         <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.1/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-4bw+/aepP/YC94hEpVNVgiZdgIC5+VKNBQNGCHeKRQN+PtmoHDEXuppvnDJzQIu9" crossorigin="anonymous">
       </head>
-      <body dir="ltr">
+      <body id="body" style="--bs-body-font-size: .875rem">
         <div class="container border mt-3 p-0 border-primary border-2 rounded">
-          <div class="btn-group float-end m-2" role="group" dir="ltr">
-            <button id="btn-fa" class="btn btn-lang btn-outline-primary btn-sm rounded-2" type="button">FA</button>&nbsp;
-            <button id="btn-en" class="btn btn-lang btn-outline-primary btn-sm rounded-2" type="button">EN</button>&nbsp;
-            <button id="btn-cn" class="btn btn-lang btn-outline-primary btn-sm rounded-2" type="button">CN</button>
-          </div>
+          <div id="lang-group" class="btn-group m-2" role="group" dir="ltr"></div>
           <div class="p-2 border-bottom border-primary border-2">
             <div class="text-nowrap fs-5 fw-bold text-dark">
-              V2RAY Worker - Control Panel &nbsp;&nbsp;<span class="text-nowrap fs-6 text-info">Version ${version}</span>
+              <span id="page-title"></span> &nbsp;&nbsp;<span class="text-nowrap fs-6 text-info"><span id="text-version"></span> ${version}</span>
             </div>
           </div>
           <div class="px-5 py-2 bg-light">
-            <label for="sub-link" class="form-label fw-bold">
-              Your subscription link for v2ray clients/ <span dir="rtl">لینک ثبت نام شما برای کلاینت‌های v2ray</span>
-              (v2rayN, v2rayNG, v2rayA, Matsuri, Nekobox, Nekoray...)
-            </label>
+            <label id="sub-link-title" for="sub-link" class="form-label fw-bold"></label>
             <input id="sub-link" readonly value="https://${url.hostname}/sub" class="p-1" style="width: calc(100% - 150px)">
             <button onclick="var tmp=document.getElementById('sub-link');tmp.select();tmp.setSelectionRange(0,99999);navigator.clipboard.writeText(tmp.value)" class="btn btn-primary p-1 mb-1">Copy</button>
           </div>
           <div class="px-5 py-2 bg-light">
-            <label for="clash-link" class="form-label fw-bold">
-              Your subscription link for clash clients/ <span dir="rtl">لینک ثبت نام شما برای کلاینت‌های کلش</span>
-              (Clash, ClashX, ClashMeta...)
-            </label>
+            <label id="custom-link-title" for="custom-link" class="form-label fw-bold"></label>
+            <input id="custom-link" readonly value="https://${url.hostname}/custom" class="p-1" style="width: calc(100% - 150px)">
+            <button onclick="var tmp=document.getElementById('custom-link');tmp.select();tmp.setSelectionRange(0,99999);navigator.clipboard.writeText(tmp.value)" class="btn btn-primary p-1 mb-1">Copy</button>
+          </div>
+          <div class="px-5 py-2 bg-light">
+            <label id="clash-link-title" for="clash-link" class="form-label fw-bold"></label>
             <input id="clash-link" readonly value="https://${url.hostname}/clash" class="p-1" style="width: calc(100% - 150px)">
             <button onclick="var tmp=document.getElementById('clash-link');tmp.select();tmp.setSelectionRange(0,99999);navigator.clipboard.writeText(tmp.value)" class="btn btn-primary p-1 mb-1">Copy</button>
           </div>
-          <div class="mx-5 my-2 p-1 border bg-warning text-center">
-            <p>The "settings" variable is not defined! Please define a namespace in Workers/KV section and add a variable named "settings" in your worker settings, as described in the video.</p>  
-            <p dir="rtl">متغیر settings تغریف نشده است. لطفا مطابق ویدیوی آموزشی، در بخش KV یک namespace تعریف کرده و در بخش متغیرهای ورکر، متغیر settings را اضافه نمایید.</p>
-          </div>
-          <div class="mx-5 my-2 p-1 border bg-success text-white text-center">
-            <p>You can continue using your worker without control panel.</p>  
-            <p>شما می‌توانید از ورکر خود بدون کنترل پنل استفاده نمایید.</p>  
+          <div id="you-can-use-your-worker-message" class="mx-5 my-2 p-4 border bg-success text-white fw-bold text-center"></div>
+          <div class="mx-5 my-2 p-1 border bg-warning">
+            <div id="you-need-namespace-message"></div>
+            <ol>
+              <li>
+                <a id="open-kv-text" href="https://dash.cloudflare.com/?to=/:account/workers/kv/namespaces" target="_blank"></a>
+              </li>
+              <li>
+                <a id="open-variables-text" href="https://dash.cloudflare.com/?to=/:account/workers/services/view/${url.hostname.split(".")[0]}/production/settings/bindings" target="_blank"></a>
+              </li>
+            </ol>
           </div>
           <div class="p-1 border-top border-2 border-primary">
             <div class="text-nowrap fs-6">
-              Copyright 2024 Vahid Farid<br/>
               <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 16 16" fill="none" role="img" class="octicon">
                 <g clip-path="url(#clip0_1668_3024)">
                   <path d="M9.52217 6.77143L15.4785 0H14.0671L8.89516 5.87954L4.76437 0H0L6.24656 8.8909L0 15.9918H1.41155L6.87321 9.78279L11.2356 15.9918H16L9.52183 6.77143H9.52217ZM7.58887 8.96923L6.95596 8.0839L1.92015 1.03921H4.0882L8.15216 6.7245L8.78507 7.60983L14.0677 14.9998H11.8997L7.58887 8.96957V8.96923Z" fill="currentColor"></path>
@@ -318,7 +387,87 @@ export async function GetPanel(request: Request, env: Env): Promise<Response> {
           </div>
         </div>
       </body>
-    </html>
+      <script>
+      let language = localStorage.getItem("lang") || "fa"
+      window.addEventListener("load", (event) => {
+        initLang();
+        setLang(language);
+      });
+      window.addEventListener('message', function (event) {
+        document.getElementById('clean-ip').value = event.data;
+      });
+  
+      function initLang() {
+        document.getElementById("lang-group").innerHTML = ""
+        for (code in strings) {
+          const el = document.createElement("button")
+          el.classList = "btn btn-outline-primary btn-sm rounded-2"
+          el.id = \`btn-\${code}\`
+          el.type = "button"
+          el.innerText = code.toUpperCase()
+          el.setAttribute("data-lang", code);
+          el.addEventListener("click", (e) => {
+              setLang(e.srcElement.getAttribute("data-lang"))
+          })
+          document.getElementById("lang-group").appendChild(el)
+  
+          const el2 = document.createElement("span")
+          el2.innerHTML = "&nbsp;"
+          document.getElementById("lang-group").appendChild(el2)
+        }
+      }
+    
+      function setLang(code) {
+        if (strings[code] === undefined) {
+          code = "en"
+        }
+        
+        document.getElementById('body').style.direction = languages[code]?.dir || "ltr"
+        document.getElementById('lang-group').style.float = languages[code]?.end || "left"
+        document.getElementById('btn-' + language).classList.remove('btn-primary')
+        document.getElementById('btn-' + language).classList.add('btn-outline-primary')
+        document.getElementById('btn-' + code).classList.remove('btn-outline-primary')
+        document.getElementById('btn-' + code).classList.add('btn-primary')
+        
+        for (key in strings[code]) {
+          document.getElementById(key).innerText = strings[code][key]
+        }
+    
+        language = code
+        localStorage.setItem('lang', code);
+      }
+  
+      const languages = {
+        en: {dir: "ltr", end: "right"},
+        fa: {dir: "rtl", end: "left"},
+      }
+    
+      const strings = {
+        en: {
+          "page-title": "V2ray Worker Control Panel",
+          "text-version": "Version",
+          "sub-link-title": "Your subscription link for v2ray clients (v2rayN, v2rayNG, v2rayA, Nekobox, Nekoray, V2Box...)",
+          "custom-link-title": "Your subscription link for custom configs",
+          "clash-link-title": "Your subscription link for clash clients (Clash, ClashX, ClashMeta...)",
+          "you-can-use-your-worker-message": "You can continue using your worker without control panel.",
+          "you-need-namespace-message": "The 'settings' namespace is not defined! Please define a namespace named 'settings' in your worker 'KV Namespace Bindings' using bellow link, as described in the video and relad the page afterward.",  
+          "open-kv-text": "Open KV",
+          "open-variables-text": "Open Worker's Variables",
+        },
+        fa: {
+          "page-title": "پنل کنترل ورکر v2ray",
+          "text-version": "نسخه",
+          "sub-link-title": "لینک ثبت نام شما برای کلاینت‌های v2rayN, v2rayNG, v2rayA, Nekobox, Nekoray, V2Box و...",
+          "custom-link-title": "لینک ثبت نام شما برای کانفیگ‌های Custom",
+          "clash-link-title": "لینک ثبت نام شما برای کلاینت‌های کلش Clash, ClashX, ClashMeta و...",
+          "you-can-use-your-worker-message": "شما می‌توانید از ورکر خود بدون پنل کنترل استفاده نمایید.",
+          "you-need-namespace-message": "فضای نام settings تعریف نشده است. لطفا مطابق ویدیوی آموزشی، از طریق لینک‌های زیر ابتدا در بخش KV یک فضای نام به اسم settings ایجاد کنید و سپس ازطریق بخش 'KV Namespace Bindings' آن را با همان نام settings به ورکر خود متصل کنید و پس از ذخیره، مجددا پنل را باز کنید.",
+          "open-kv-text": "بازکردن بخش KV",
+          "open-variables-text": "بازکردن بخش متغیرهای ورکر",
+        },
+      }
+      </script>
+      </html>
     `
 
     return new Response(htmlContent, {
