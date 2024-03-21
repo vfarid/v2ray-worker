@@ -1,4 +1,5 @@
 import { UUID } from "crypto";
+import { v5 as uuidv5 } from "uuid"
 import { connect } from 'cloudflare:sockets'
 import { GetVlessConfig, MuddleDomain } from "./helpers"
 import { cfPorts } from "./variables"
@@ -10,7 +11,7 @@ let uuid: string = ""
 let proxyIP: string = ""
 
 export async function GetVlessConfigList(sni: string, addressList: Array<string>, max: number, env: Env) {
-  let uuid: string | null = await env.settings.get("UUID")
+  let uuid: string = await env.settings.get("UUID") || uuidv5(sni, "1b671a64-40d5-491e-99b0-da01ff1f3341")
   let configList: Array<Config> = []
   if (uuid) {
     for (let i = 0; i < max; i++) {
@@ -30,8 +31,9 @@ export async function GetVlessConfigList(sni: string, addressList: Array<string>
 export async function VlessOverWSHandler(request: Request, env: Env) {
     uuid = uuid || await env.settings.get("UUID") || ""
 	if (!proxyIP) {
-		let proxyIPList = (await env.settings.get("ProxyIPs"))?.split("\n") || []
+		let proxyIPList = (await env.settings.get("Proxies"))?.trim().split("\n") || []
 		if (proxyIPList.length) {
+			proxyLastUpdate = currentTime
 			proxyIP = proxyIPList[Math.floor(Math.random() * proxyIPList.length)]
 		}
 	}
