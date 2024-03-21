@@ -3,7 +3,7 @@ import { Buffer } from 'buffer'
 import { GetVlessConfigList } from './vless'
 import { MixConfig, ValidateConfig, DecodeConfig } from "./config"
 import { GetMultipleRandomElements, RemoveDuplicateConfigs, AddNumberToConfigs, IsBase64, MuddleDomain } from "./helpers"
-import { defaultProviders, defaultProtocols, defaultALPNList, defaultPFList } from "./variables"
+import { defaultProtocols, defaultALPNList, defaultPFList } from "./variables"
 import { Env, Config } from "./interfaces"
 
 
@@ -41,7 +41,7 @@ export async function GetConfigList(url: URL, env: Env): Promise<Array<Config>> 
   
   if (settingsNotAvailable) {
     protocols = defaultProtocols
-    providers = defaultProviders
+    providers = []
     alpnList = defaultALPNList
     fingerPrints = defaultPFList
     includeOriginalConfigs = true
