@@ -333,9 +333,9 @@ export async function GetPanel(request: Request, env: Env): Promise<Response> {
             </div>
           </div>
           <div class="mb-1 p-1 border-top border-2 border-primary">
-            <input type="checkbox" class="form-check-input" id="clean-ips-check" ${cleanDomainIPs.length ? "checked" : ""}>
+            <input type="checkbox" class="form-check-input" name="clean_ips_check" value="1" id="clean-ips-check" ${cleanDomainIPs.length ? "checked" : ""}>
             <label id="clean-ips-title" for="clean-ips" class="form-label fw-bold"></label>
-            <textarea rows="3" name="clean_ips" style="display: none" class="form-control" id="clean-ips">${cleanDomainIPs.join("\n")}</textarea>
+            <textarea rows="5" name="clean_ips" style="display: none" class="form-control" id="clean-ips">${cleanDomainIPs.join("\n")}</textarea>
             <div id="clean-ips-remarks" style="display: none" class="form-text"></div>
             <div>
               <button id="clean-ips-btn-title" type="button" style="display: none" class="btn btn-info" data-bs-toggle="modal" data-bs-target="#ip-scanner-modal"></button>
@@ -354,35 +354,35 @@ export async function GetPanel(request: Request, env: Env): Promise<Response> {
               </div>
           </div>
           <div class="mb-1 p-1">
-            <input type="checkbox" class="form-check-input" id="alpn-list-check" ${alpnList.length ? "checked" : ""}>
+            <input type="checkbox" class="form-check-input" name="alpn_list_check" value="1" id="alpn-list-check" ${alpnList.length ? "checked" : ""}>
             <label id="alpn-list-title" for="alpn-list" class="form-label fw-bold"></label>
-            <textarea rows="3" name="alpn_list" style="display: none" class="form-control" id="alpn-list">${alpnList.join("\n")}</textarea>
+            <textarea rows="5" name="alpn_list" style="display: none" class="form-control" id="alpn-list">${alpnList.join("\n")}</textarea>
             <div id="alpn-list-remarks" style="display: none" class="form-text"></div>
           </div>
           <div class="mb-1 p-1">
-            <input type="checkbox" class="form-check-input" id="fp-list-check" ${fingerPrints.length ? "checked" : ""}>
+            <input type="checkbox" class="form-check-input" name="fp_list_check" value="1" id="fp-list-check" ${fingerPrints.length ? "checked" : ""}>
             <label id="fp-list-title" for="fp-list" class="form-label fw-bold"></label>
-            <textarea rows="3" name="fp_list" style="display: none" class="form-control" id="fp-list">${fingerPrints.join("\n")}</textarea>
+            <textarea rows="5" name="fp_list" style="display: none" class="form-control" id="fp-list">${fingerPrints.join("\n")}</textarea>
             <div id="fp-list-remarks" style="display: none" class="form-text"></div>
           </div>
           <div class="mb-1 p-1">
-            <input type="checkbox" class="form-check-input" id="providers-check" ${providers.length ? "checked" : ""}>
+            <input type="checkbox" class="form-check-input" name="providers_check" value="1" id="providers-check" ${providers.length ? "checked" : ""}>
             <label id="providers-title" for="providers" class="form-label fw-bold"></label> &nbsp; &nbsp;
             <span id="providers-auto-title" class="text-info"></span>
             <textarea rows="7" name="providers" style="display: none" class="form-control" id="providers">${providers.join("\n")}</textarea>
             <div id="providers-remarks"  style="display: none" class="form-text"></div>
           </div>
           <div class="mb-1 p-1">
-            <input type="checkbox" class="form-check-input" id="proxies-check" ${proxies.length ? "checked" : ""}>
+            <input type="checkbox" class="form-check-input" name="proxies_check" value="1" id="proxies-check" ${proxies.length ? "checked" : ""}>
             <label id="proxies-title" for="proxies" class="form-label fw-bold"></label> &nbsp; &nbsp;
             <span id="proxies-auto-title" class="text-info"></span>
             <textarea rows="7" name="proxies" style="display: none" class="form-control" id="proxies">${proxies.join("\n")}</textarea>
             <div id="proxies-remarks"  style="display: none" class="form-text"></div>
           </div>
           <div class="mb-1 p-1">
-            <input type="checkbox" class="form-check-input" id="configs-check" ${configs.length ? "checked" : ""}>
+            <input type="checkbox" class="form-check-input" name="configs_check" value="1" id="configs-check" ${configs.length ? "checked" : ""}>
             <label id="personal-configs-title" for="configs" class="form-label fw-bold"></label>
-            <textarea rows="3" name="configs" style="display: none" class="form-control" id="configs">${configs.join("\n")}</textarea>
+            <textarea rows="5" name="configs" style="display: none" class="form-control" id="configs">${configs.join("\n")}</textarea>
             <div id="personal-configs-remarks" style="display: none" class="form-text"></div>
           </div>
           ${passwordSection}
