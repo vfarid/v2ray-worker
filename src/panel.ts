@@ -38,9 +38,9 @@ export async function GetPanel(request: Request, env: Env): Promise<Response> {
     var htmlMessage = ""
     const message = url.searchParams.get("message")
     if (message == "success") {
-      htmlMessage = `<div class="p-1 bg-success text-white fw-bold text-center">Settings saved successfully. / تنظیمات با موفقیت ذخیره شد.</div>`
+      htmlMessage = `<div class="p-1 bg-success text-white fw-bold text-center">Settings saved successfully.<br/>تنظیمات با موفقیت ذخیره شد.</div>`
     } else if (message == "error") {
-      htmlMessage = `<div class="p-1 bg-danger text-white fw-bold text-center">Failed to save settings! / خطا در ذخیره‌ی تنظیمات!</div>`
+      htmlMessage = `<div class="p-1 bg-danger text-white fw-bold text-center">Failed to save settings!<br/>خطا در ذخیره‌ی تنظیمات!</div>`
     }
 
     var passwordSection = ""
@@ -233,9 +233,10 @@ export async function GetPanel(request: Request, env: Env): Promise<Response> {
             "proxies-title": "Built-in VLESS Proxies",
             "proxies-auto-title": "Auto load from github",
             "proxies-remarks": "One ip/domain per line.",
-            "personal-configs-title": "Personal configs",
+            "personal-configs-title": "Private Configs",
             "personal-configs-remarks": "One config per line.",
-
+            "save-button": "Save",
+            "reset-button": "Reset",
           },
           fa: {
             "page-title": "پنل کنترل ورکر v2ray",
@@ -262,15 +263,17 @@ export async function GetPanel(request: Request, env: Env): Promise<Response> {
             "proxies-title": "پروکسی‌های VLESS روی ورکر",
             "proxies-auto-title": "دریافت خودکار از گیت‌هاب",
             "proxies-remarks": "در هر سطر یک آی‌پی/دامین وارد کنید.",
-            "personal-configs-title": "کانفیگ‌های شخصی",
+            "personal-configs-title": "کانفیگ‌های خصوصی",
             "personal-configs-remarks": "در هر سطر یک کانفیگ وارد کنید.",
+            "save-button": "ذخیره",
+            "reset-button": "بازنشانی",
           },
         }
       </script>
     </head>
     <body id="body" style="--bs-body-font-size: .875rem">
       <div class="container border mt-3 p-0 border-primary border-2 rounded">
-        <div id="lang-group" class="btn-group float-end m-2" role="group" dir="ltr"></div>
+        <div id="lang-group" class="btn-group m-2" role="group" dir="ltr"></div>
         <div class="p-2 border-bottom border-primary border-2">
           <div class="text-nowrap fs-5 fw-bold text-dark">
             <span id="page-title"></span> &nbsp;&nbsp;<span class="text-nowrap fs-6 text-info"><span id="text-version"></span> ${version}</span>
@@ -386,8 +389,8 @@ export async function GetPanel(request: Request, env: Env): Promise<Response> {
             <div id="personal-configs-remarks" style="display: none" class="form-text"></div>
           </div>
           ${passwordSection}
-          <button type="submit" name="save" value="save" class="btn btn-primary">Save / ذخیره</button>
-          <button type="submit" name="reset" value="reset" class="btn btn-warning">Reset / بازنشانی</button>
+          <button type="submit" id="save-button" name="save" value="save" class="btn btn-primary"></button>
+          <button type="submit" id="reset-button" name="reset" value="reset" class="btn btn-warning"></button>
         </form>
         <div class="p-1 border-top border-2 border-primary">
           <div class="text-nowrap fs-6">
@@ -585,7 +588,7 @@ export async function PostPanel(request: Request, env: Env): Promise<Response> {
       await env.settings.delete("Token")
       return Response.redirect(`${url.protocol}//${url.hostname}${url.port != "443" ? ":" + url.port : ""}?message=success`, 302)
     } else if (formData.get("save")) {
-      const password: string | null = formData.get("password")
+      const password: string = formData.get("password")?.toString() || ""
       if (password) {
         if (password.length < 6 || password !== formData.get("password_confirmation")) {
           return Response.redirect(`${url.protocol}//${url.hostname}${url.port != "443" ? ":" + url.port : ""}?message=invalid-password`, 302)
@@ -597,21 +600,23 @@ export async function PostPanel(request: Request, env: Env): Promise<Response> {
         await env.settings.put("Token", token)
       }
       
-      await env.settings.put("MaxConfigs", formData.get("max") || "200")
+      await env.settings.put("MaxConfigs", formData.get("max")?.toString() || "200")
       await env.settings.put("Protocols", formData.getAll("protocols")?.join("\n").trim())
-      await env.settings.put("ALPNs", formData.get("alpn_list")?.trim().split("\n").map(str => str.trim()).join("\n") || "")
-      await env.settings.put("FingerPrints", formData.get("fp_list")?.trim().split("\n").map(str => str.trim()).join("\n") || "")
-      await env.settings.put("Providers", formData.get("providers")?.trim().split("\n").map(str => str.trim()).join("\n") || "")
-      await env.settings.put("CleanDomainIPs", formData.get("clean_ips")?.trim().split("\n").map(str => str.trim()).join("\n") || "")
-      await env.settings.put("Configs", formData.get("configs")?.trim().split("\n").map(str => str.trim()).join("\n") || "")
-      await env.settings.put("IncludeOriginalConfigs", formData.get("original") || "no")
-      await env.settings.put("IncludeMergedConfigs", formData.get("merged") || "no")
+      await env.settings.put("ALPNs", formData.get("alpn_list_check")?.toString() ? formData.get("alpn_list")?.toString().trim().split("\n").map(str => str.trim()).join("\n") || "" : "")
+      await env.settings.put("FingerPrints", formData.get("fp_list_check")?.toString() ? formData.get("fp_list")?.toString().trim().split("\n").map(str => str.trim()).join("\n") || "" : "")
+      await env.settings.put("Providers", formData.get("providers_check")?.toString() ? formData.get("providers")?.toString().trim().split("\n").map(str => str.trim()).join("\n") || "" : "")
+      await env.settings.put("Proxies", formData.get("proxies_check")?.toString() ? formData.get("proxies")?.toString().trim().split("\n").map(str => str.trim()).join("\n") || "" : "")
+      await env.settings.put("CleanDomainIPs", formData.get("clean_ips_check")?.toString() ? formData.get("clean_ips")?.toString().trim().split("\n").map(str => str.trim()).join("\n") || "" : "")
+      await env.settings.put("Configs", formData.get("configs_check")?.toString() ? formData.get("configs")?.toString().trim().split("\n").map(str => str.trim()).join("\n") || "" : "")
+      await env.settings.put("IncludeOriginalConfigs", formData.get("original")?.toString() || "no")
+      await env.settings.put("IncludeMergedConfigs", formData.get("merged")?.toString() || "no")
     } else {
       await env.settings.delete("MaxConfigs")
       await env.settings.delete("Protocols")
       await env.settings.delete("ALPNs")
       await env.settings.delete("FingerPrints")
       await env.settings.delete("Providers")
+      await env.settings.delete("Proxies")
       await env.settings.delete("CleanDomainIPs")
       await env.settings.delete("Configs")
       await env.settings.delete("IncludeOriginalConfigs")
