@@ -108,5 +108,5 @@ export async function getDefaultProviders(): Promise<Array<string>> {
 }
 
 export async function getDefaultProxies(): Promise<Array<string>> {
-	return fetch(proxiesUri).then(r => r.text()).then(t => t.trim().split("\n"))
+	return fetch(proxiesUri).then(r => r.text()).then(t => t.trim().split("\n").filter(t => t.trim().length > 0))
 }
