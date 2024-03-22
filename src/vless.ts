@@ -1,7 +1,7 @@
 import { UUID } from "crypto";
 import { v5 as uuidv5 } from "uuid"
 import { connect } from 'cloudflare:sockets'
-import { GetVlessConfig, MuddleDomain } from "./helpers"
+import { GetVlessConfig, MuddleDomain, getDefaultProxies } from "./helpers"
 import { cfPorts } from "./variables"
 import { RemoteSocketWrapper, CustomArrayBuffer, VlessHeader, UDPOutbound, Config, Env } from "./interfaces"
 
@@ -31,16 +31,22 @@ export async function GetVlessConfigList(sni: string, addressList: Array<string>
 }
 
 export async function VlessOverWSHandler(request: Request, env: Env) {
-  uuid = uuid || await env.settings.get("UUID") || ""
-  const currentDate = (new Date).getTime() / 1000
-  if (currentDate - proxyIPUpdatedAt > proxyIPUpdateInterval) {
-    proxyIP = ""
+  console.log(uuid, proxyIP)
+  if (!uuid) {
+    uuid = await env.settings.get("UUID") || uuidv5(new URL(request.url)?.hostname, "1b671a64-40d5-491e-99b0-da01ff1f3341")
   }
-  if (!proxyIP) {
-    let proxyIPList = (await env.settings.get("Proxies"))?.trim().split("\n") || []
-    if (!proxyIPList.length) {
-      proxyIPList = await fetch("https://raw.githubusercontent.com/vfarid/v2ray-worker/main/resources/proxy-list.txt").then(r => r.text()).then(t => t.trim().split("\n").filter(t => t.trim().length > 0))
+  const currentDate = (new Date).getTime() / 1000
+  if (!proxyIP || (currentDate - proxyIPUpdatedAt > proxyIPUpdateInterval)) {
+    let proxyIPList: Array<string> = []
+    try {
+      proxyIPList = (await env.settings.get("Proxies"))?.trim().split("\n") || []
+      if (!proxyIPList.length) {
+        proxyIPList = await getDefaultProxies() || []
+      }
+    } catch (e) {
+      // Ignore
     }
+
     if (proxyIPList.length) {
       proxyIPUpdatedAt = currentDate
       proxyIP = proxyIPList[Math.floor(Math.random() * proxyIPList.length)]
