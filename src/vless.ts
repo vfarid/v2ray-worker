@@ -84,13 +84,13 @@ export async function VlessOverWSHandler(request: Request, env: Env) {
         isUDP,
       } = ProcessVlessHeader(chunk, uuid)
       
-          address = addressRemote
+      address = addressRemote
       
       if (hasError) {
         throw new Error(message)
       }
 
-          if (isUDP) {
+      if (isUDP) {
         if (portRemote === 53) {
           isDns = true
         } else {
