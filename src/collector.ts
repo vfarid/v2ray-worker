@@ -29,24 +29,27 @@ export async function GetConfigList(url: URL, env: Env): Promise<Array<Config>> 
     if (protocols.includes("vless")) {
       maxConfigs = maxConfigs - maxVlessConfigs
     }
-    providers = await env.settings.get("Providers").then(val => {return val ? val.split("\n") : []})
-    alpnList = await env.settings.get("ALPNs").then(val => {return val ? val.split("\n") : []})
-    fingerPrints = await env.settings.get("FingerPrints").then(val => {return val ? val.split("\n") : []})
+    providers = (await env.settings.get("Providers"))?.split("\n").filter(t => t.trim().length > 0) || []
+    alpnList = (await env.settings.get("ALPNs"))?.split("\n").filter(t => t.trim().length > 0) || []
+    fingerPrints = (await env.settings.get("FingerPrints"))?.split("\n").filter(t => t.trim().length > 0) || []
     includeOriginalConfigs = (await env.settings.get("IncludeOriginalConfigs") || "yes") == "yes"
     includeMergedConfigs = ((await env.settings.get("IncludeMergedConfigs") || "yes") == "yes") && protocols.includes("vmess")
-    cleanDomainIPs = await env.settings.get("CleanDomainIPs").then(val => {return val ? val.split("\n") : []})
+    cleanDomainIPs = (await env.settings.get("CleanDomainIPs"))?.split("\n").filter(t => t.trim().length > 0) || []
     settingsNotAvailable = (await env.settings.get("MaxConfigs")) === null
-    myConfigs = (await env.settings.get("Configs"))?.split("\n") || []
+    myConfigs = (await env.settings.get("Configs"))?.split("\n").filter(t => t.trim().length > 0) || []
   } catch { }
   
+  protocols = protocols.length ? protocols : defaultProtocols
+  alpnList = alpnList.length ? alpnList : defaultALPNList
+  fingerPrints = fingerPrints.length ? fingerPrints : defaultPFList
+  cleanDomainIPs = cleanDomainIPs.length ? cleanDomainIPs : [MuddleDomain(url.hostname)]
+
   if (settingsNotAvailable) {
-    protocols = defaultProtocols
-    providers = []
-    alpnList = defaultALPNList
-    fingerPrints = defaultPFList
     includeOriginalConfigs = true
     includeMergedConfigs = true
-    cleanDomainIPs = [MuddleDomain(url.hostname)]
+  }
+  if (!providers.length) {
+    providers = await fetch("https://raw.githubusercontent.com/vfarid/v2ray-worker/main/resources/provider-list.txt").then(r => r.text()).then(t => t.trim().split("\n").filter(t => t.trim().length > 0))
   }
 
   if (includeOriginalConfigs && includeMergedConfigs) {
@@ -58,6 +61,7 @@ export async function GetConfigList(url: URL, env: Env): Promise<Array<Config>> 
   let finalConfigList: Array<Config> = []
   let newConfigs: Array<any> = []
   const configPerList: number = Math.floor(maxConfigs / Object.keys(providers).length)
+  
   for (const providerUrl of providers) {
     try {
       var content: string = await fetch(providerUrl.trim()).then(r => r.text())
