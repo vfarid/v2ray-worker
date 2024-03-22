@@ -9,4 +9,5 @@ node_modules/
 .old
 .wrangler
 dist/
+resources/.local/
 package-lock.json
