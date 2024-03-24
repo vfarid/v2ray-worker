@@ -1,5 +1,5 @@
 import { UUID } from "crypto"
-import { Config } from "./interfaces"
+import { Env, Config } from "./interfaces"
 import { providersUri, proxiesUri } from "./variables"
 
 export function GetMultipleRandomElements(arr: Array<any>, num: number): Array<any> {
@@ -109,4 +109,18 @@ export async function getDefaultProviders(): Promise<Array<string>> {
 
 export async function getDefaultProxies(): Promise<Array<string>> {
 	return fetch(proxiesUri).then(r => r.text()).then(t => t.trim().split("\n").filter(t => t.trim().length > 0))
+}
+
+export async function getProxies(env: Env): Promise<Array<string>> {
+	let proxyIPList: Array<string> = []
+    try {
+      proxyIPList = (await env.settings.get("Proxies"))?.trim().split("\n").filter(t => t.trim().length > 0) || []
+    } catch (e) {
+      // Ignore
+    }
+    if (!proxyIPList.length) {
+      proxyIPList = await getDefaultProxies()
+    }
+
+	return proxyIPList
 }
