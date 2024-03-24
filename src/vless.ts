@@ -1,7 +1,7 @@
 import { UUID } from "crypto";
 import { v5 as uuidv5 } from "uuid"
 import { connect } from 'cloudflare:sockets'
-import { GetVlessConfig, MuddleDomain, getDefaultProxies } from "./helpers"
+import { GetVlessConfig, MuddleDomain, getProxies } from "./helpers"
 import { cfPorts } from "./variables"
 import { RemoteSocketWrapper, CustomArrayBuffer, VlessHeader, UDPOutbound, Config, Env } from "./interfaces"
 
@@ -9,8 +9,9 @@ const WS_READY_STATE_OPEN: number = 1
 const WS_READY_STATE_CLOSING: number = 2
 let uuid: string = ""
 let proxyIP: string = ""
+let proxyIPList: Array<string> = []
 let proxyIPUpdatedAt: number = 0
-const proxyIPUpdateInterval = 21600 // 6 hours
+const proxyIPUpdateInterval = 900 // 15 minutes
 
 export async function GetVlessConfigList(sni: string, addressList: Array<string>, max: number, env: Env) {
   let uuid: string = await env.settings.get("UUID") || uuidv5(sni, "1b671a64-40d5-491e-99b0-da01ff1f3341")
@@ -35,20 +36,12 @@ export async function VlessOverWSHandler(request: Request, env: Env) {
   if (!uuid) {
     uuid = await env.settings.get("UUID") || uuidv5(new URL(request.url)?.hostname, "1b671a64-40d5-491e-99b0-da01ff1f3341")
   }
-  const currentDate = (new Date).getTime() / 1000
-  if (!proxyIP || (currentDate - proxyIPUpdatedAt > proxyIPUpdateInterval)) {
-    let proxyIPList: Array<string> = []
-    try {
-      proxyIPList = (await env.settings.get("Proxies"))?.trim().split("\n") || []
-      if (!proxyIPList.length) {
-        proxyIPList = await getDefaultProxies() || []
-      }
-    } catch (e) {
-      // Ignore
-    }
+
+  if (!proxyIP) {
+    proxyIPList = await getProxies(env)
 
     if (proxyIPList.length) {
-      proxyIPUpdatedAt = currentDate
+      proxyIPUpdatedAt = (new Date).getTime() / 1000
       proxyIP = proxyIPList[Math.floor(Math.random() * proxyIPList.length)]
     }
   }
@@ -339,9 +332,16 @@ async function HandleTCPOutbound(remoteSocket: RemoteSocketWrapper, addressRemot
   }
 
   async function retry() {
-    const tcpSocket: Socket = await connectAndWrite(proxyIP || addressRemote, portRemote)
+    let tcpSocket: Socket = await connectAndWrite(proxyIP || addressRemote, portRemote)
     tcpSocket.closed.catch((error: any) => { }).finally(() => {
       SafeCloseWebSocket(webSocket)
+      const currentDate = (new Date).getTime() / 1000
+      if (currentDate - proxyIPUpdatedAt > proxyIPUpdateInterval && proxyIPList.length) {
+        proxyIPUpdatedAt = (new Date).getTime() / 1000
+        proxyIP = proxyIPList[Math.floor(Math.random() * proxyIPList.length)]
+        console.log((new Date).getUTCDate(), proxyIP)
+        return retry()
+      }
     })
     RemoteSocketToWS(tcpSocket, webSocket, vlessResponseHeader, null)
   }
