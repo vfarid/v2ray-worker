@@ -24,23 +24,21 @@ export default {
         return new Response(ToBase64Subscription(configList));
       }
     } else if (lcPath == "vless-ws") {
-      return VlessOverWSHandler(request, env);
+      return VlessOverWSHandler(request, url.hostname, env);
     } else if (lcPath == "login") {
       if (request.method === "GET") {
         return GetLogin(request, env)
       } else if (request.method === "POST") {
         return PostLogin(request, env)
       }
-    } else if (lcPath == panelPath) {
+    } else if (path) {
+      return fetch(new Request(new URL("https://" + path), request))
+    } else {
       if (request.method === "GET") {
         return GetPanel(request, env)
       } else if (request.method === "POST") {
         return PostPanel(request, env)
       }
-    } else if (path) {
-      return fetch(new Request(new URL("https://" + path), request))
-    } else {
-      return fetch("https://www.randomurbanshop.ro")
     }
     return new Response("Invalid request!");
   }
