@@ -1,7 +1,6 @@
 import { UUID } from "crypto";
-import { v5 as uuidv5 } from "uuid"
 import { connect } from 'cloudflare:sockets'
-import { GetVlessConfig, MuddleDomain, getProxies } from "./helpers"
+import { GetVlessConfig, MuddleDomain, getProxies, getUUID } from "./helpers"
 import { cfPorts } from "./variables"
 import { RemoteSocketWrapper, CustomArrayBuffer, VlessHeader, UDPOutbound, Config, Env } from "./interfaces"
 
@@ -9,43 +8,26 @@ const WS_READY_STATE_OPEN: number = 1
 const WS_READY_STATE_CLOSING: number = 2
 let uuid: string = ""
 let proxyIP: string = ""
-let proxyIPList: Array<string> = []
-let proxyIPUpdatedAt: number = 0
-const proxyIPUpdateInterval = 900 // 15 minutes
 
 export async function GetVlessConfigList(sni: string, addressList: Array<string>, max: number, env: Env) {
-  let uuid: string = await env.settings.get("UUID") || uuidv5(sni, "1b671a64-40d5-491e-99b0-da01ff1f3341")
+  uuid = getUUID(sni)
+  console.log("GetVlessConfigList", uuid)
   let configList: Array<Config> = []
-  if (uuid) {
-    for (let i = 0; i < max; i++) {
-      configList.push(GetVlessConfig(
-        i + 1,
-        uuid as UUID,
-        MuddleDomain(sni),
-        addressList[Math.floor(Math.random() * addressList.length)],
-        cfPorts[Math.floor(Math.random() * cfPorts.length)]
-      ))
-    }
+  for (let i = 0; i < max; i++) {
+    configList.push(GetVlessConfig(
+      i + 1,
+      uuid as UUID,
+      MuddleDomain(sni),
+      addressList[Math.floor(Math.random() * addressList.length)],
+      cfPorts[Math.floor(Math.random() * cfPorts.length)]
+    ))
   }
 
   return configList
 }
 
-export async function VlessOverWSHandler(request: Request, env: Env) {
-  console.log(uuid, proxyIP)
-  if (!uuid) {
-    uuid = await env.settings.get("UUID") || uuidv5(new URL(request.url)?.hostname, "1b671a64-40d5-491e-99b0-da01ff1f3341")
-  }
-
-  if (!proxyIP) {
-    proxyIPList = await getProxies(env)
-
-    if (proxyIPList.length) {
-      proxyIPUpdatedAt = (new Date).getTime() / 1000
-      proxyIP = proxyIPList[Math.floor(Math.random() * proxyIPList.length)]
-    }
-  }
-
+export async function VlessOverWSHandler(request: Request, sni: string, env: Env) {
+  uuid = getUUID(sni)
   const [client, webSocket]: Array<WebSocket> = Object.values(new WebSocketPair)
 
   webSocket.accept()
@@ -72,6 +54,7 @@ export async function VlessOverWSHandler(request: Request, env: Env) {
         return
       }
 
+      console.log("ProcessVlessHeader", uuid)
       const {
         hasError,
         message,
@@ -101,13 +84,13 @@ export async function VlessOverWSHandler(request: Request, env: Env) {
       const rawClientData: Uint8Array = chunk.slice(rawDataIndex)
 
       if (isDns) {
-        const { write }: UDPOutbound = await HandleUDPOutbound(webSocket, vlessResponseHeader)
+        const { write }: UDPOutbound = await HandleUDPOutbound(webSocket, vlessResponseHeader, env)
         udpStreamWrite = write
         udpStreamWrite(rawClientData)
         return
       }
 
-      HandleTCPOutbound(remoteSocketWapper, addressRemote, portRemote, rawClientData, webSocket, vlessResponseHeader)
+      HandleTCPOutbound(remoteSocketWapper, addressRemote, portRemote, rawClientData, webSocket, vlessResponseHeader, env)
     }
   })).catch((err) => { })
 
@@ -265,7 +248,7 @@ function ProcessVlessHeader(vlessBuffer: ArrayBuffer, uuid: string): VlessHeader
   } as VlessHeader
 }
 
-async function HandleUDPOutbound(webSocket: WebSocket, vlessResponseHeader: ArrayBuffer): Promise<UDPOutbound> {
+async function HandleUDPOutbound(webSocket: WebSocket, vlessResponseHeader: ArrayBuffer, env: Env): Promise<UDPOutbound> {
   let isVlessHeaderSent = false
   const transformStream = new TransformStream({
     transform(chunk, controller) {
@@ -282,9 +265,10 @@ async function HandleUDPOutbound(webSocket: WebSocket, vlessResponseHeader: Arra
   })
 
   // only handle dns udp for now
+  const blockPorn = await env.settings.get("BlockPorn")
   transformStream.readable.pipeTo(new WritableStream({
     async write(chunk: any) {
-      const resp = await fetch('https://1.1.1.1/dns-query', {
+      const resp = await fetch(blockPorn == "yes" ? "https://1.1.1.3/dns-query": "https://1.1.1.1/dns-query", {
         method: 'POST',
         headers: {
           'content-type': 'application/dns-message',
@@ -313,7 +297,8 @@ async function HandleUDPOutbound(webSocket: WebSocket, vlessResponseHeader: Arra
   }
 }
 
-async function HandleTCPOutbound(remoteSocket: RemoteSocketWrapper, addressRemote: string, portRemote: number, rawClientData: Uint8Array, webSocket: WebSocket, vlessResponseHeader: Uint8Array): Promise<void> {
+async function HandleTCPOutbound(remoteSocket: RemoteSocketWrapper, addressRemote: string, portRemote: number, rawClientData: Uint8Array, webSocket: WebSocket, vlessResponseHeader: Uint8Array, env: Env): Promise<void> {
+  let retryCount = 2
   async function connectAndWrite(address: string, port: number) {
     const socketAddress: SocketAddress = {
       hostname: address,
@@ -332,16 +317,14 @@ async function HandleTCPOutbound(remoteSocket: RemoteSocketWrapper, addressRemot
   }
 
   async function retry() {
-    let tcpSocket: Socket = await connectAndWrite(proxyIP || addressRemote, portRemote)
+    const proxyList = (await env.settings.get("Proxies"))?.split("\n").filter(t => t.trim().length > 0) || []
+    if (proxyList.length) {
+      proxyIP = proxyList[Math.floor(Math.random() * proxyList.length)]
+    }
+
+    const tcpSocket: Socket = await connectAndWrite(proxyIP || addressRemote, portRemote)
     tcpSocket.closed.catch((error: any) => { }).finally(() => {
       SafeCloseWebSocket(webSocket)
-      const currentDate = (new Date).getTime() / 1000
-      if (currentDate - proxyIPUpdatedAt > proxyIPUpdateInterval && proxyIPList.length) {
-        proxyIPUpdatedAt = (new Date).getTime() / 1000
-        proxyIP = proxyIPList[Math.floor(Math.random() * proxyIPList.length)]
-        console.log((new Date).getUTCDate(), proxyIP)
-        return retry()
-      }
     })
     RemoteSocketToWS(tcpSocket, webSocket, vlessResponseHeader, null)
   }
@@ -415,7 +398,7 @@ function Base64ToArrayBuffer(base64Str: string): CustomArrayBuffer {
 }
 
 function IsValidVlessUUID(uuid: string): boolean {
-  return /^[0-9a-f]{8}-[0-9a-f]{4}-[4][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(uuid);
+  return /^[0-9a-f]{8}-[0-9a-f]{4}-[5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(uuid);
 }
 
 function Stringify(arr: Uint8Array, offset: number = 0): UUID {
