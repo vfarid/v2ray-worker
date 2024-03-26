@@ -1,4 +1,5 @@
 import { UUID } from "crypto"
+import { v5 as uuidv5 } from "uuid"
 import { Env, Config } from "./interfaces"
 import { providersUri, proxiesUri } from "./variables"
 
@@ -123,4 +124,8 @@ export async function getProxies(env: Env): Promise<Array<string>> {
     }
 
 	return proxyIPList
+}
+
+export function getUUID(sni: string) : string {
+  return uuidv5(sni.toLowerCase(), "ebc4a168-a6fe-47ce-bc25-6183c6212dcc")
 }
