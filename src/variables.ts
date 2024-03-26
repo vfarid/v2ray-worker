@@ -4,14 +4,17 @@ export const proxiesUri: string = "https://raw.githubusercontent.com/vfarid/v2ra
 
 export const defaultProtocols: Array<string> = [
   "vmess",
-  "vless",
+  "built-in-vless",
 ]
 
 export const defaultALPNList: Array<string> = [
+  "h3,h2,http/1.1",
+  "h3,h2,http/1.1",
+  "h3,h2,http/1.1",
+  "h3,h2",
   "h2,http/1.1",
   "h2",
   "http/1.1",
-  "h2,http/1.1",
 ]
 
 export const defaultPFList: Array<string> = [
