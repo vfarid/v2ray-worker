@@ -3,13 +3,13 @@ import { Buffer } from 'buffer'
 import { GetVlessConfigList } from './vless'
 import { MixConfig, ValidateConfig, DecodeConfig } from "./config"
 import { GetMultipleRandomElements, RemoveDuplicateConfigs, AddNumberToConfigs, IsBase64, MuddleDomain } from "./helpers"
-import { defaultProtocols, defaultALPNList, defaultPFList } from "./variables"
+import { version, defaultProtocols, defaultALPNList, defaultPFList } from "./variables"
 import { Env, Config } from "./interfaces"
 
 
 export async function GetConfigList(url: URL, env: Env): Promise<Array<Config>> {
   let maxConfigs: number = 200
-  let maxVlessConfigs: number = 10
+  const maxVlessConfigs: number = 20
   let protocols: Array<string> = []
   let providers: Array<string> = []
   let alpnList: Array<string> = []
@@ -22,13 +22,17 @@ export async function GetConfigList(url: URL, env: Env): Promise<Array<Config>> 
 
   try {
     maxConfigs = parseInt(await env.settings.get("MaxConfigs") || "200")
-    if (maxConfigs > 200) {
-      maxVlessConfigs = Math.ceil(maxConfigs / 20)
+    const settingsVersion = await env.settings.get("Version") || "2.0"
+    if (settingsVersion == version) {
+      protocols = await env.settings.get("Protocols").then(val => {return val ? val.split("\n") : []})
     }
-    protocols = await env.settings.get("Protocols").then(val => {return val ? val.split("\n") : []})
-    if (protocols.includes("vless")) {
-      maxConfigs = maxConfigs - maxVlessConfigs
+    const blockPorn = await env.settings.get("BlockPorn") == "yes"
+    
+    if (blockPorn) {
+      protocols = ["built-in-vless"]
+      maxConfigs = 0
     }
+
     providers = (await env.settings.get("Providers"))?.split("\n").filter(t => t.trim().length > 0) || []
     alpnList = (await env.settings.get("ALPNs"))?.split("\n").filter(t => t.trim().length > 0) || []
     fingerPrints = (await env.settings.get("FingerPrints"))?.split("\n").filter(t => t.trim().length > 0) || []
@@ -37,12 +41,22 @@ export async function GetConfigList(url: URL, env: Env): Promise<Array<Config>> 
     cleanDomainIPs = (await env.settings.get("CleanDomainIPs"))?.split("\n").filter(t => t.trim().length > 0) || []
     settingsNotAvailable = (await env.settings.get("MaxConfigs")) === null
     myConfigs = (await env.settings.get("Configs"))?.split("\n").filter(t => t.trim().length > 0) || []
+
+    let proxies = (await env.settings.get("ManualProxies"))?.split("\n").filter(t => t.trim().length > 0) || []
+    if (!proxies.length) {
+      proxies = await fetch("https://raw.githubusercontent.com/vfarid/v2ray-worker/main/resources/proxy-list.txt").then(r => r.text()).then(t => t.trim().split("\n").filter(t => t.trim().length > 0))
+    }
+    await env.settings.put("Proxies", proxies.join("\n"))
   } catch { }
   
   protocols = protocols.length ? protocols : defaultProtocols
   alpnList = alpnList.length ? alpnList : defaultALPNList
   fingerPrints = fingerPrints.length ? fingerPrints : defaultPFList
   cleanDomainIPs = cleanDomainIPs.length ? cleanDomainIPs : [MuddleDomain(url.hostname)]
+
+  if (protocols.includes("built-in-vless")) {
+    maxConfigs = maxConfigs - maxVlessConfigs
+  }
 
   if (settingsNotAvailable) {
     includeOriginalConfigs = true
@@ -155,7 +169,7 @@ export async function GetConfigList(url: URL, env: Env): Promise<Array<Config>> 
 
   finalConfigList = RemoveDuplicateConfigs(finalConfigList.filter(ValidateConfig))
 
-  if (protocols.includes("vless")) {
+  if (protocols.includes("built-in-vless")) {
     finalConfigList = AddNumberToConfigs(finalConfigList, maxVlessConfigs + 1)
     finalConfigList = (await GetVlessConfigList(url.hostname, cleanDomainIPs, maxVlessConfigs, env)).concat(finalConfigList)
   } else {
@@ -164,7 +178,7 @@ export async function GetConfigList(url: URL, env: Env): Promise<Array<Config>> 
   
   if (alpnList.length) {
     finalConfigList = finalConfigList.map((conf: Config) => {
-      if (["vless", "vmess"].includes(conf.type) && conf.security != "reality") {
+      if (["built-in-vless", "vless", "vmess"].includes(conf.type) && conf.security != "reality") {
         conf.alpn = alpnList[Math.floor(Math.random() * alpnList.length)]
       }
       return conf
