@@ -100,3 +100,104 @@ export const defaultClashConfig = {
       "MATCH,All"
   ],
 }
+
+export const defaultV2rayConfig = {
+  "stats":{},
+  "log": {
+    "loglevel": "warning"
+  },
+  "policy":{
+      "levels": {
+        "8": {
+          "handshake": 4,
+          "connIdle": 300,
+          "uplinkOnly": 1,
+          "downlinkOnly": 1
+        }
+      },
+      "system": {
+        "statsOutboundUplink": true,
+        "statsOutboundDownlink": true
+      }
+  },
+  "inbounds": [{
+    "tag": "socks",
+    "port": 10808,
+    "protocol": "socks",
+    "settings": {
+      "auth": "noauth",
+      "udp": true,
+      "userLevel": 8
+    },
+    "sniffing": {
+      "enabled": true,
+      "destOverride": [
+        "http",
+        "tls"
+      ]
+    }
+  },
+  {
+    "tag": "http",
+    "port": 10809,
+    "protocol": "http",
+    "settings": {
+      "userLevel": 8
+    }
+  }
+],
+  "outbounds": [{
+    "tag": "proxy",
+    "protocol": "",
+    "settings": {
+      "vnext": [
+        {
+          "address": "",
+          "port": 443,
+          "users": [
+            {
+              "id": "",
+              "alterId": 0,
+              "security": "auto",
+              "level": 8,
+              "encryption": "none",
+              "flow": "",
+            }
+          ]
+        }
+      ],
+    },
+    "streamSettings": {
+      "network": "tcp",
+      "security": "",
+      "sockopts": {},
+    },
+    "mux": {
+      "enabled": false
+    }
+  },
+  {
+    "protocol": "freedom",
+    "settings": {},
+    "tag": "direct"
+  },
+  {
+    "protocol": "blackhole",
+    "tag": "block",
+    "settings": {
+      "response": {
+        "type": "http"
+      }
+    }
+  }
+  ],
+  "routing": {
+      "domainStrategy": "IPIfNonMatch",
+      "rules": []
+  },
+  "dns": {
+      "hosts": {},
+      "servers": []
+  }
+}
+
