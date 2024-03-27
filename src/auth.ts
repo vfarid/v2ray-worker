@@ -1,6 +1,7 @@
 import * as bcrypt from 'bcryptjs'
 import { GenerateToken, Delay } from "./helpers"
 import { Env } from "./interfaces"
+import { version } from "./variables"
 
 export async function GetLogin(request: Request, env: Env): Promise<Response> {
   const url: URL = new URL(request.url)
@@ -22,8 +23,7 @@ export async function GetLogin(request: Request, env: Env): Promise<Response> {
         <div class="p-3 bg-primary text-white">
           <div class="text-nowrap fs-4 fw-bold text-center">V2RAY Worker - Control Panel</div>
           <div class="text-nowrap fs-6 text-center">
-            Version 2.2 by
-            <a href="https://twitter.com/vahidfarid" target="_blank" class="text-white">Vahid Farid</a>
+            Version ${version}
           </div>
         </div>
         ${htmlMessage}
