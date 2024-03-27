@@ -34,18 +34,16 @@ export function GetVlessConfig(no: number, uuid: UUID, sni: string, address: str
   return {
 		remarks: `${no}-vless-worker-${address}`,
 		configType: "vless",
+		security: "tls",
 		tls: "tls",
 		network: "ws",
 		port: port,
 		sni: sni,
 		uuid: uuid,
-		fp: "randomized",
-		alpn: "h3,h2,http/1.1",
 		host: sni,
 		path: "vless-ws/?ed=2048",
 		address: address,
 	} as Config
-	// return `vless://${uuid}@${address}:${port}?encryption=none&security=tls&sni=${sni}&fp=${fp}&alpn=${alpn}&type=ws&host=${sni}&path=vless-ws%2F%3Fed%3D2048#${no}-vless-worker-${address}`
 }
 
 export function IsBase64(str: string): boolean {
