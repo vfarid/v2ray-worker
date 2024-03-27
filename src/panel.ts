@@ -15,6 +15,7 @@ export async function GetPanel(request: Request, env: Env): Promise<Response> {
 
     const settingsVersion: string = await env.settings.get("Version") || "2.0"
     if (settingsVersion != version) {
+      console.log(settingsVersion, version)
       await env.settings.delete("Providers")
       await env.settings.delete("Protocols")
     }
@@ -643,7 +644,7 @@ export async function PostPanel(request: Request, env: Env): Promise<Response> {
         proxies = await fetch("https://raw.githubusercontent.com/vfarid/v2ray-worker/main/resources/proxy-list.txt").then(r => r.text()).then(t => t.trim().split("\n").filter(t => t.trim().length > 0))
       }
       await env.settings.put("Proxies", proxies.join("\n"))
-      await env.settings.put("VERSION", version)
+      await env.settings.put("Version", version)
     } else {
       await env.settings.delete("MaxConfigs")
       await env.settings.delete("Protocols")
