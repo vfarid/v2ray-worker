@@ -225,7 +225,7 @@ export function DecodeConfig(configStr: string): Config {
         authority: url.searchParams.get('authority') || "",
       } as Config
 	  } catch (e) {
-      console.log(e, configStr)
+      // console.log(e, configStr)
     }
 	}
 	return conf
