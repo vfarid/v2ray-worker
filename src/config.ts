@@ -64,7 +64,7 @@ export function EncodeConfig(conf: Config): string {
       }?encryption=${
         encodeURIComponent(conf.encryption || "none")
       }&type=${
-        conf.type
+        conf.network
       }${
         conf.path ? "&path=" + encodeURIComponent(conf.path) : ""
       }${
