@@ -41,7 +41,6 @@ export interface Config {
   host?: string,
   alpn?: string,
   fp?: string,
-  "ws-opts"?: WSOpts,
   obfs?: string,
   protocol?: string,
   fragment?: string,
@@ -50,7 +49,6 @@ export interface Config {
   spx?: string,
   sid?: string,
   headerType?: string,
-  merged?: boolean,
   flow?: string,
   serviceName?: string,
   seed?: string,
@@ -58,6 +56,7 @@ export interface Config {
   key?: string,
   mode?: string,
   authority?: string,
+  merged?: boolean,
 }
 
 export interface WSOpts {
