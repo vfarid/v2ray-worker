@@ -209,7 +209,7 @@ export async function GetPanel(request: Request, env: Env): Promise<Response> {
             "page-title": "V2ray Worker Control Panel",
             "text-version": "Version",
             "sub-link-title": "Your subscription link for v2ray clients (v2rayN, v2rayNG, v2rayA, Nekobox, Nekoray, V2Box...)",
-            "custom-link-title": "Your subscription link for custom configs",
+            // "custom-link-title": "Your subscription link for custom configs",
             "clash-link-title": "Your subscription link for clash clients (Clash, ClashX, ClashMeta...)",
             "includes-title": "Merged and original configs",
             "include-merged-configs-title": "Include configs merged with worker",
@@ -233,7 +233,7 @@ export async function GetPanel(request: Request, env: Env): Promise<Response> {
             "personal-configs-title": "Private Configs",
             "personal-configs-remarks": "One config per line.",
             "block-porn-title": "‌Block Porn",
-            "block-porn-remarks": "If you check this option, all protocols will be deactivated except built-in vless.",
+            "block-porn-remarks": "If you check this option, porn websites will be blocked and all protocols will be deactivated except built-in vless protocols.",
             "enable-fragments-title": "Enable Fragments",
             "enable-fragments-remarks": "If you check this option, fragments will be enabled for all TLS configs using random values.",
             "save-button": "Save",
@@ -243,7 +243,7 @@ export async function GetPanel(request: Request, env: Env): Promise<Response> {
             "page-title": "پنل کنترل ورکر v2ray",
             "text-version": "نسخه",
             "sub-link-title": "لینک ثبت نام شما برای کلاینت‌های v2rayN, v2rayNG, v2rayA, Nekobox, Nekoray, V2Box و...",
-            "custom-link-title": "لینک ثبت نام شما برای کانفیگ‌های Custom",
+            // "custom-link-title": "لینک ثبت نام شما برای کانفیگ‌های Custom",
             "clash-link-title": "لینک ثبت نام شما برای کلاینت‌های کلش Clash, ClashX, ClashMeta و...",
             "includes-title": "کانفیگ‌های اصلی و ترکیبی",
             "include-merged-configs-title": "کانفیگ‌های ترکیب شده با ورکر را اضافه کن",
@@ -267,7 +267,7 @@ export async function GetPanel(request: Request, env: Env): Promise<Response> {
             "personal-configs-title": "کانفیگ‌های خصوصی",
             "personal-configs-remarks": "در هر سطر یک کانفیگ وارد کنید.",
             "block-porn-title": "مسدودسازی پورن",
-            "block-porn-remarks": "در صورت فعال‌سازی این گزینه تمام پروتکل‌ها بجز vless های ذاتی ورکر غیرفعال می‌شوند.",
+            "block-porn-remarks": "در صورت فعال‌سازی این گزینه، همزمان با مسدودسازی پورن تمام پروتکل‌ها بجز vless های داخلی ورکر نیز غیرفعال می‌شوند.",
             "enable-fragments-title": "فعال‌سازی فرگمنت",
             "enable-fragments-remarks": "در صورت فعال‌سازی این گزینه، فرگمنت برای تمام کانفیگ‌های TLS با مقادیر اتفاقی فعال می‌شود.",
             "save-button": "ذخیره",
@@ -328,14 +328,6 @@ export async function GetPanel(request: Request, env: Env): Promise<Response> {
               <div>
                 <input type="checkbox" name="protocols" value="vless" class="form-check-input" id="vless-protocol-ckeck" ${protocols.includes('vless') ? "checked" : ""} />
                 <label class="form-check-label" for="vless-protocol-ckeck">VLESS</label>
-              </div>
-              <div>
-                <input type="checkbox" name="protocols" value="trojan" class="form-check-input" id="trojan-protocol-ckeck" ${protocols.includes('trojan') ? "checked" : ""} />
-                <label class="form-check-label" for="trojan-protocol-ckeck">TROJAN</label>
-              </div>
-              <div>
-                <input type="checkbox" name="protocols" value="ss" class="form-check-input" id="ss-protocol-ckeck" ${protocols.includes('ss') ? "checked" : ""} />
-                <label class="form-check-label" for="ss-protocol-ckeck">ShadowSocks</label>
               </div>
             </div>
           </div>
