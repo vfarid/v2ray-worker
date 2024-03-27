@@ -14,12 +14,12 @@ export default {
     const url: URL = new URL(request.url)
     const path: string = url.pathname.replace(/^\/|\/$/g, "")
     const lcPath = path.toLowerCase()
-    if (["sub", "clash", "custom", "raw"].includes(lcPath)) {
+    if (["sub", "clash", /*"custom", */"raw"].includes(lcPath)) {
       const configList: Array<Config> = await GetConfigList(url, env)
       if (lcPath == "clash") {
         return new Response(ToYamlSubscription(configList));
-      } else if (lcPath == "custom") {
-        return new Response(ToCustomConfigSubscription(configList));
+      // } else if (lcPath == "custom") {
+      //   return new Response(ToCustomConfigSubscription(configList));
       } else if (lcPath == "raw") {
         return new Response(ToRawSubscription(configList));
       } else {
