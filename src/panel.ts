@@ -15,7 +15,7 @@ export async function GetPanel(request: Request, env: Env): Promise<Response> {
 
     const settingsVersion: string = await env.settings.get("Version") || "2.0"
     if (settingsVersion != version) {
-      console.log(settingsVersion, version)
+      // console.log(settingsVersion, version)
       await env.settings.delete("Providers")
       await env.settings.delete("Protocols")
     }
