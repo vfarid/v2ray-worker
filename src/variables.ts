@@ -53,6 +53,20 @@ export const supportedCiphers: Array<string> = [
 	"chacha20-ietf-poly1305",
 ]
 
+export const fragmentsLengthList: Array<string> = [
+  "10-20",
+  "10-50",
+  "20-50",
+  "30-80",
+  "50-100",
+]
+
+export const fragmentsIntervalList: Array<string> = [
+  "10-20",
+  "10-50",
+  "20-50",
+]
+
 export const defaultClashConfig = {
   port: 7890,
   "socks-port": 7891,
