@@ -3,7 +3,7 @@ import { Buffer } from 'buffer'
 import { GetVlessConfigList } from './vless'
 import { MixConfig, ValidateConfig, DecodeConfig } from "./config"
 import { GetMultipleRandomElements, RemoveDuplicateConfigs, AddNumberToConfigs, IsBase64, MuddleDomain } from "./helpers"
-import { version, defaultProtocols, defaultALPNList, defaultPFList } from "./variables"
+import { version, defaultProtocols, defaultALPNList, defaultPFList, fragmentsLengthList, fragmentsIntervalList } from "./variables"
 import { Env, Config } from "./interfaces"
 
 
@@ -19,6 +19,7 @@ export async function GetConfigList(url: URL, env: Env): Promise<Array<Config>> 
   let cleanDomainIPs: Array<string> = []
   let myConfigs: Array<string> = []
   let settingsNotAvailable: boolean = true
+  let enableFragments = false
 
   try {
     maxConfigs = parseInt(await env.settings.get("MaxConfigs") || "200")
@@ -41,6 +42,7 @@ export async function GetConfigList(url: URL, env: Env): Promise<Array<Config>> 
     cleanDomainIPs = (await env.settings.get("CleanDomainIPs"))?.split("\n").filter(t => t.trim().length > 0) || []
     settingsNotAvailable = (await env.settings.get("MaxConfigs")) === null
     myConfigs = (await env.settings.get("Configs"))?.split("\n").filter(t => t.trim().length > 0) || []
+    enableFragments = await env.settings.get("EnableFragments") == "yes"
 
     let proxies = (await env.settings.get("ManualProxies"))?.split("\n").filter(t => t.trim().length > 0) || []
     if (!proxies.length) {
@@ -178,7 +180,7 @@ export async function GetConfigList(url: URL, env: Env): Promise<Array<Config>> 
   
   if (alpnList.length) {
     finalConfigList = finalConfigList.map((conf: Config) => {
-      if (["built-in-vless", "vless", "vmess"].includes(conf.type) && conf.security != "reality") {
+      if (["built-in-vless", "vless", "vmess"].includes(conf.configType) && conf.security != "reality") {
         conf.alpn = alpnList[Math.floor(Math.random() * alpnList.length)]
       }
       return conf
@@ -188,6 +190,18 @@ export async function GetConfigList(url: URL, env: Env): Promise<Array<Config>> 
   if (fingerPrints.length) {
     finalConfigList = finalConfigList.map((conf: Config) => {
       conf.fp = fingerPrints[Math.floor(Math.random() * fingerPrints.length)]
+      if (enableFragments) {
+        conf.fragment = fingerPrints[Math.floor(Math.random() * fingerPrints.length)]
+      }
+      return conf
+    })
+  }
+
+  if (enableFragments) {
+    finalConfigList = finalConfigList.map((conf: Config) => {
+      if (["vless", "vmess"].includes(conf.configType) && conf.tls == "tls") {
+        conf.fragment = `tlshello,${fragmentsLengthList[Math.floor(Math.random() * fragmentsLengthList.length)]},${fragmentsIntervalList[Math.floor(Math.random() * fragmentsIntervalList.length)]}`
+      }
       return conf
     })
   }
