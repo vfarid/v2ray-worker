@@ -56,41 +56,34 @@ export function MixConfig(cnf: Config, url: URL, address: string, provider: stri
 
 export function EncodeConfig(conf: Config): string {
   try {
-    if (conf.type == "vmess") {
+    if (conf.configType == "vmess") {
       const config = {
         type: conf.type,
-        ps: conf.name,
-        add: conf.server,
+        ps: conf.remarks,
+        add: conf.address,
         port: conf.port,
         id: conf.uuid,
         aid: conf.alterId || 0,
-        cipher: conf.cipher || "none",
-        tls: conf.tls ? "tls" : null,
-        "skip-cert-verify": conf["skip-cert-verify"],
-        sni: conf.servername,
+        tls: conf.tls,
+        sni: conf.sni,
         net: conf.network,
         path: conf.path,
         host: conf.host,
         alpn: conf.alpn,
         fp: conf.fp,
-        "ws-opts": conf["ws-opts"],
-        udp: conf.udp,
-        merged: conf.merged || false,
       }
       return `${config.type}://${Buffer.from(JSON.stringify(config), "utf-8").toString("base64")}`
-    } else if (conf.type == "vless") {
-      return `${
-        conf.type
-      }://${
-        conf.uuid || conf.password
+    } else if (conf.configType == "vless") {
+      return `vless://${
+        conf.uuid
       }@${
-        conf.server
+        conf.address
       }:${
         conf.port
       }?encryption=${
-        encodeURIComponent(conf.cipher || "none")
+        encodeURIComponent(conf.encryption || "none")
       }&type=${
-        conf.network || "tcp"
+        conf.type
       }${
         conf.path ? "&path=" + encodeURIComponent(conf.path) : ""
       }${
@@ -98,7 +91,23 @@ export function EncodeConfig(conf: Config): string {
       }${
         conf.security ? "&security=" + encodeURIComponent(conf.security) : ""
       }${
+        conf.flow ? "&flow=" + encodeURIComponent(conf.flow) : ""
+      }${
         conf.pbk ? "&pbk=" + encodeURIComponent(conf.pbk) : ""
+      }${
+        conf.sid ? "&sid=" + encodeURIComponent(conf.sid) : ""
+      }${
+        conf.spx ? "&spx=" + encodeURIComponent(conf.spx) : ""
+      }${
+        conf.seed ? "&seed=" + encodeURIComponent(conf.seed) : ""
+      }${
+        conf.quicSecurity ? "&quicSecurity=" + encodeURIComponent(conf.quicSecurity) : ""
+      }${
+        conf.key ? "&key=" + encodeURIComponent(conf.key) : ""
+      }${
+        conf.mode ? "&mode=" + encodeURIComponent(conf.mode) : ""
+      }${
+        conf.authority ? "&authority=" + encodeURIComponent(conf.authority) : ""
       }${
         conf.headerType ? "&headerType=" + encodeURIComponent(conf.headerType) : ""
       }${
@@ -106,162 +115,145 @@ export function EncodeConfig(conf: Config): string {
       }${
         conf.fp ? "&fp=" + encodeURIComponent(conf.fp) : ""
       }${
-        conf.tls ? "&security=tls" : ""
+        conf.fragment ? "&fragment=" + encodeURIComponent(conf.fragment) : ""
       }&sni=${
-        encodeURIComponent(conf.servername || conf.host || conf.server)
+        encodeURIComponent(conf.sni || conf.host || conf.address)
       }#${
-        encodeURIComponent(conf.name)
+        encodeURIComponent(conf.remarks)
       }`;
-    } else if (conf.type == "trojan") {
-      return `${
-        conf.type
-      }://${
-        conf.password || conf.uuid
-      }@${
-        conf.server
-      }:${
-        conf.port
-      }?type=${
-        conf.network
-      }${
-        conf.cipher ? "&cipher=" + encodeURIComponent(conf.cipher) : ""
-      }${
-        conf.path ? "&path=" + conf.path : ""
-      }${
-        conf.host ? "&Host=" + conf.host : ""
-      }${
-        conf.alpn ? "&alpn=" + encodeURIComponent(conf.alpn) : ""
-      }${
-        conf.fp ? "&fp=" + encodeURIComponent(conf.fp) : ""
-      }${
-        conf.tls ? "&tls=1" : ""
-      }&sni=${
-        encodeURIComponent(conf.servername || conf.host || conf.server)
-      }#${
-        encodeURIComponent(conf.name)
-      }`;
-    } else if (conf.type == "ss") {
-      return `${
-        conf.type
-      }://${
-        conf.password || conf.uuid
-      }@${
-        conf.server
-      }:${
-        conf.port || "80"
-      }?cipher=${
-        conf.cipher || "none"
-      }${
-        conf.path ? "&path=" + encodeURIComponent(conf.path) : ""
-      }${
-        conf.host ? "&host=" + encodeURIComponent(conf.host) : ""
-      }${
-        conf.tfo ? "&tfo=1" : ""
-      }${
-        conf.obfs ? "&obfs=" + encodeURIComponent(conf.obfs) : ""
-      }${
-        conf.protocol ? "&protocol=" + encodeURIComponent(conf.protocol) : ""
-      }${
-        conf["protocol-param"] ? "&protocol-param=" + encodeURIComponent(conf["protocol-param"]) : ""
-      }${
-        conf["obfs-param"] ? "&obfs-param=" + encodeURIComponent(conf["obfs-param"]) : ""
-      }#${
-        encodeURIComponent(conf.name)
-      }`;
-    // } else if (conf.type == "ssr") {
-    //   return `${conf.type}://${Buffer.from(
-    //   `${conf.server}:${conf.port}:origin:${conf.cipher}:${conf["protocol-param"]}
-    //   , "utf-8").toString("base64")}`
+
+    // } else if (conf.type == "trojan") {
+    //   return `${
+    //     conf.type
+    //   }://${
+    //     conf.password || conf.uuid
+    //   }@${
+    //     conf.server
+    //   }:${
+    //     conf.port
+    //   }?type=${
+    //     conf.network
+    //   }${
+    //     conf.cipher ? "&cipher=" + encodeURIComponent(conf.cipher) : ""
+    //   }${
+    //     conf.path ? "&path=" + conf.path : ""
+    //   }${
+    //     conf.host ? "&Host=" + conf.host : ""
+    //   }${
+    //     conf.alpn ? "&alpn=" + encodeURIComponent(conf.alpn) : ""
+    //   }${
+    //     conf.fp ? "&fp=" + encodeURIComponent(conf.fp) : ""
+    //   }${
+    //     conf.tls ? "&tls=1" : ""
+    //   }&sni=${
+    //     encodeURIComponent(conf.servername || conf.host || conf.server)
+    //   }#${
+    //     encodeURIComponent(conf.name)
+    //   }`;
+    // } else if (conf.type == "ss") {
+    //   return `${
+    //     conf.type
+    //   }://${
+    //     conf.password || conf.uuid
+    //   }@${
+    //     conf.server
+    //   }:${
+    //     conf.port || "80"
+    //   }?cipher=${
+    //     conf.cipher || "none"
+    //   }${
+    //     conf.path ? "&path=" + encodeURIComponent(conf.path) : ""
+    //   }${
+    //     conf.host ? "&host=" + encodeURIComponent(conf.host) : ""
+    //   }${
+    //     conf.tfo ? "&tfo=1" : ""
+    //   }${
+    //     conf.obfs ? "&obfs=" + encodeURIComponent(conf.obfs) : ""
+    //   }${
+    //     conf.protocol ? "&protocol=" + encodeURIComponent(conf.protocol) : ""
+    //   }${
+    //     conf["protocol-param"] ? "&protocol-param=" + encodeURIComponent(conf["protocol-param"]) : ""
+    //   }${
+    //     conf["obfs-param"] ? "&obfs-param=" + encodeURIComponent(conf["obfs-param"]) : ""
+    //   }#${
+    //     encodeURIComponent(conf.name)
+    //   }`;
+    // // } else if (conf.type == "ssr") {
+    // //   return `${conf.type}://${Buffer.from(
+    // //   `${conf.server}:${conf.port}:origin:${conf.cipher}:${conf["protocol-param"]}
+    // //   , "utf-8").toString("base64")}`
     }
   } catch (e) {
-    // console.log(e)
+    // console.log(e, conf)
   }
   return ""
 }
   
 export function DecodeConfig(configStr: string): Config {
-	let match: any = null
 	let conf: any = null
 	if (configStr.startsWith("vmess://")) {
 	  try {
       conf = JSON.parse(Buffer.from(configStr.substring(8), "base64").toString("utf-8"))
       conf = {
-        name: conf?.ps || conf?.name,
-        server: conf?.add,
-        port: conf?.port || 443,
-        type: "vmess",
-        uuid: conf?.id || conf?.password,
+        configType: "vmess",
+        remarks: conf?.ps,
+        address: conf.add,
+        port: conf?.port || (conf?.tls == "tls" ? 443 : 80),
+        uuid: conf.id,
         alterId: conf?.aid || 0,
-        cipher: conf?.cipher || "auto",
-        tls: conf?.tls == "tls",
-        "skip-cert-verify": true,
-        servername: conf?.sni || conf?.host,
+        security: conf?.scy || "auto",
         network: conf?.net,
+        type: conf?.type || "tcp",
+        host: conf?.host,
         path: conf?.path || "",
-        host: conf?.host || conf?.sni,
-        alpn: conf?.alpn,
-        fp: conf["client-fingerprint"] || conf?.fp,
-        "ws-opts": {
-          path: conf?.path || "",
-          headers: {
-            Host: conf?.host || conf?.sni,
-          }
-        },
-        udp: true,
+        tls: conf?.tls || "",
+        sni: conf?.sni || conf?.host,
       } as Config
     } catch (e) { }
-	} else if ((match = configStr.match(/^(?<type>trojan|vless):\/\/(?<id>.*)@(?<server>.*):(?<port>\d+)\??(?<options>.*)#(?<ps>.*)$/)) && match.groups) {
+	} else if (configStr.startsWith("vless://")) {
 	  try {
-      const optionsArr = match.groups.options.split('&') ?? []
-      const optionsObj = optionsArr.reduce((obj: Record<string, string>, option: string) => {
-        const [key, value] = option.split('=')
-        obj[key] = decodeURIComponent(value)
-        return obj
-      }, {} as Record<string, string>)
-    
+      const url: URL = new URL(configStr)
       conf = {
-        name: match.groups.ps,
-        server: match.groups.server,
-        port: match.groups.port || 443,
-        type: match.groups.type,
-        uuid: match.groups.id,
-        alterId: optionsObj.aid || 0,
-        cipher: "auto",
-        security: optionsObj.security || "",
-        tls: (optionsObj.security || "none") == "tls",
-        "skip-cert-verify": true,
-        servername: optionsObj.sni || "",
-        network: optionsObj.type || (optionsObj.net || "tcp"),
-        path: optionsObj.path || "",
-        host: optionsObj.host || optionsObj.Host || "",
-        alpn: optionsObj.alpn || "",
-        fp: optionsObj.fp || "",
-        pbk: optionsObj.pbk || "",
-        headerType: optionsObj.headerType || "",
-        "ws-opts": {
-          path: optionsObj.path || "",
-          headers: {
-            Host: optionsObj.host || optionsObj.sni,
-          }
-        },
-        udp: true,
+        configType: "vless",
+        remarks: decodeURIComponent(url.hash.substring(1)),
+        address: url.hostname,
+        port: url.port || (url.searchParams.get('tls') == "tls" ? 443 : 80),
+        uuid: url.username,
+        security: url.searchParams.get('security') || "",
+        encryption: url.searchParams.get('encryption') || "none",
+        network: url.searchParams.get('network'),
+        type: url.searchParams.get('type') || "tcp",
+        serviceName: url.searchParams.get('serviceName') || "",
+        host: url.searchParams.get('host') || "",
+        path: url.searchParams.get('path') || "",
+        tls: url.searchParams.get('security') == "tls" ? "tls" : "",
+        sni: url.searchParams.get('sni') || "",
+        flow: url.searchParams.get('flow') || "",
+        pbk: url.searchParams.get('pbk') || "",
+        sid: url.searchParams.get('sid') || "",
+        spx: url.searchParams.get('spx') || "",
+        headerType: url.searchParams.get('headerType') || "",
+        seed: url.searchParams.get('seed') || "",
+        quicSecurity: url.searchParams.get('quicSecurity') || "",
+        key: url.searchParams.get('key') || "",
+        mode: url.searchParams.get('mode') || "",
+        authority: url.searchParams.get('authority') || "",
       } as Config
 	  } catch (e) {
-      // console.log(e, conf)
+      console.log(e, configStr)
     }
 	}
-  // console.log("OK", conf)
 	return conf
 }
 
 export function ValidateConfig(conf: Config): boolean {
 	try {
-		if (["vmess", "vless"].includes(conf.type) && IsValidUUID(conf.uuid as string) && conf.name) {
-      return !!(conf.server || conf.servername)
-		} else if (["trojan"].includes(conf.type) && (conf.uuid || conf.password) && conf.name) {
-      return !!(conf.server || conf.servername)
-		} else if (["ss", "ssr"].includes(conf.type) && supportedCiphers.includes(conf.cipher as string)) {
-      return !!(conf.server || conf.servername)
+		if (["vmess", "vless"].includes(conf.configType) && IsValidUUID(conf.uuid as string) && conf.remarks) {
+      return !!(conf.address || conf.sni)
+		// } else if (["trojan"].includes(conf.configType) && (conf.uuid || conf.password) && conf.remarks) {
+    //   return !!(conf.server || conf.servername)
+		// } else if (["ss", "ssr"].includes(conf.type) && supportedCiphers.includes(conf.cipher as string)) {
+    //   return !!(conf.server || conf.servername)
 		}
 	} catch (e) { }
 
