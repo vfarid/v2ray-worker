@@ -7,46 +7,27 @@ export function MixConfig(cnf: Config, url: URL, address: string, provider: stri
 	const hostname: string = MuddleDomain(url.hostname)
   try {
 		let conf = {...cnf};
-		if (!conf.tls || conf.network != "ws") {
-			return null
+		if (!["ws", "h2", "http"].includes(conf.network)) {
+			throw new Error("Network is not supported!")
+		} else if (!cfPorts.includes(conf.port)) {
+			throw new Error("Port is not matched!")
 		}
 
-		let addr = ""
-		if (conf.servername) {
-			addr = conf.servername
-		} else if (conf["ws-opts"] && conf["ws-opts"].headers.Host && !IsIp(conf["ws-opts"].headers.Host)) {
-			addr = conf["ws-opts"].headers.Host
-		} else if (conf.server && !IsIp(conf.server)) {
-			addr = conf.server
-		}
-		if (!addr) {
-			return null
-		}
-		if (!conf.port) {
-			conf.port = 443
+		let addr = conf.sni || conf.host || conf.address
+		if (IsIp(addr)) {
+			throw new Error("Invalid SNI!")
 		}
 
-		if (!cfPorts.includes(conf.port)) {
-			return null
+		if (addr.toLocaleLowerCase().endsWith('.workers.dev') || addr.toLocaleLowerCase().endsWith('.pages.dev')) {
+			throw new Error("Config is running on Cloudflare, Skipped!")
 		}
 
-		if (addr.toLocaleLowerCase().endsWith('.workers.dev') && conf.path) {
-      return null
-		}
-
-		conf.name = conf.name + "-worker"
-    const path = conf["ws-opts"]?.path || conf.path
-    conf["ws-opts"] = {
-      path: "",
-      headers: {
-        Host: hostname
-      }
-    }
+		conf.remarks = conf.remarks + "-worker"
+    const path = conf.path
 		conf.host = hostname
-		conf.servername = hostname
-		conf.server = address
-		conf.path = "/" + addr + (path ? "/" + path.replace(/^\//g, "") : "")
-    conf["ws-opts"].path = conf.path
+		conf.sni = hostname
+		conf.address = address
+		conf.path = `/${addr}:${conf.port}/${path.replace(/^\//g, "")}`
 		conf.merged = true
 		return conf
 	} catch (e) {
@@ -194,16 +175,18 @@ export function DecodeConfig(configStr: string): Config {
 	if (configStr.startsWith("vmess://")) {
 	  try {
       conf = JSON.parse(Buffer.from(configStr.substring(8), "base64").toString("utf-8"))
+      const network = conf?.net || conf?.type || "tcp"
+      const type = conf?.type || ""
       conf = {
         configType: "vmess",
         remarks: conf?.ps,
         address: conf.add,
-        port: conf?.port || (conf?.tls == "tls" ? 443 : 80),
+        port: parseInt(conf?.port || (conf?.tls == "tls" ? "443" : "80")),
         uuid: conf.id,
         alterId: conf?.aid || 0,
         security: conf?.scy || "auto",
-        network: conf?.net,
-        type: conf?.type || "tcp",
+        network: network,
+        type: type == network ? "" : type,
         host: conf?.host,
         path: conf?.path || "",
         tls: conf?.tls || "",
@@ -213,16 +196,18 @@ export function DecodeConfig(configStr: string): Config {
 	} else if (configStr.startsWith("vless://")) {
 	  try {
       const url: URL = new URL(configStr)
+      const network = url.searchParams.get('network') || url.searchParams.get('type') || "tcp"
+      const type = url.searchParams.get('type') || ""
       conf = {
         configType: "vless",
         remarks: decodeURIComponent(url.hash.substring(1)),
         address: url.hostname,
-        port: url.port || (url.searchParams.get('tls') == "tls" ? 443 : 80),
+        port: parseInt(url.port || (url.searchParams.get('tls') == "tls" ? "443" : "80")),
         uuid: url.username,
         security: url.searchParams.get('security') || "",
         encryption: url.searchParams.get('encryption') || "none",
-        network: url.searchParams.get('network'),
-        type: url.searchParams.get('type') || "tcp",
+        network: network,
+        type: type == network ? "" : type,
         serviceName: url.searchParams.get('serviceName') || "",
         host: url.searchParams.get('host') || "",
         path: url.searchParams.get('path') || "",
