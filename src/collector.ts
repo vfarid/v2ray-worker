@@ -38,7 +38,7 @@ export async function GetConfigList(url: URL, env: Env): Promise<Array<Config>> 
     alpnList = (await env.settings.get("ALPNs"))?.split("\n").filter(t => t.trim().length > 0) || []
     fingerPrints = (await env.settings.get("FingerPrints"))?.split("\n").filter(t => t.trim().length > 0) || []
     includeOriginalConfigs = (await env.settings.get("IncludeOriginalConfigs") || "yes") == "yes"
-    includeMergedConfigs = ((await env.settings.get("IncludeMergedConfigs") || "yes") == "yes") && protocols.includes("vmess")
+    includeMergedConfigs = ((await env.settings.get("IncludeMergedConfigs") || "yes") == "yes") && (protocols.includes("vmess") || protocols.includes("vless"))
     cleanDomainIPs = (await env.settings.get("CleanDomainIPs"))?.split("\n").filter(t => t.trim().length > 0) || []
     settingsNotAvailable = (await env.settings.get("MaxConfigs")) === null
     myConfigs = (await env.settings.get("Configs"))?.split("\n").filter(t => t.trim().length > 0) || []
@@ -101,7 +101,7 @@ export async function GetConfigList(url: URL, env: Env): Promise<Array<Config>> 
         acceptableConfigList.push({
           url: providerUrl,
           count: configPerList,
-          configs: newConfigs.filter((cnf: any) => cnf.type == "vmess"),
+          configs: newConfigs.filter((cnf: any) => ["vmess", "vless"].includes(cnf.configType)),
           mergedConfigs: null,
         })
       }
@@ -123,7 +123,7 @@ export async function GetConfigList(url: URL, env: Env): Promise<Array<Config>> 
     const el: any = acceptableConfigList[i]
     acceptableConfigList[i].mergedConfigs = el.configs
       .map((cnf: any) => MixConfig(cnf, url, address, el.name))
-      .filter((cnf: any) => cnf?.merged && cnf?.name)
+      .filter((cnf: any) => cnf?.merged && cnf?.remarks)
   }
   let remaining: number = 0
   for (let i: number = 0; i < 5; i++) {
@@ -178,33 +178,14 @@ export async function GetConfigList(url: URL, env: Env): Promise<Array<Config>> 
     finalConfigList = AddNumberToConfigs(finalConfigList, 1)
   }
   
-  if (alpnList.length) {
-    finalConfigList = finalConfigList.map((conf: Config) => {
-      if (["built-in-vless", "vless", "vmess"].includes(conf.configType) && conf.security != "reality") {
-        conf.alpn = alpnList[Math.floor(Math.random() * alpnList.length)]
-      }
-      return conf
-    })
-  }
-
-  if (fingerPrints.length) {
-    finalConfigList = finalConfigList.map((conf: Config) => {
-      conf.fp = fingerPrints[Math.floor(Math.random() * fingerPrints.length)]
-      if (enableFragments) {
-        conf.fragment = fingerPrints[Math.floor(Math.random() * fingerPrints.length)]
-      }
-      return conf
-    })
-  }
-
-  if (enableFragments) {
-    finalConfigList = finalConfigList.map((conf: Config) => {
-      if (["vless", "vmess"].includes(conf.configType) && conf.tls == "tls") {
-        conf.fragment = `tlshello,${fragmentsLengthList[Math.floor(Math.random() * fragmentsLengthList.length)]},${fragmentsIntervalList[Math.floor(Math.random() * fragmentsIntervalList.length)]}`
-      }
-      return conf
-    })
-  }
+  finalConfigList = finalConfigList.map((conf: Config) => {
+    conf.fp = fingerPrints[Math.floor(Math.random() * fingerPrints.length)]
+    conf.alpn = alpnList[Math.floor(Math.random() * alpnList.length)]
+    if (enableFragments && conf.tls == "tls") {
+      conf.fragment = `tlshello,${fragmentsLengthList[Math.floor(Math.random() * fragmentsLengthList.length)]},${fragmentsIntervalList[Math.floor(Math.random() * fragmentsIntervalList.length)]}`
+    }
+    return conf
+  })
 
   return finalConfigList
 }
