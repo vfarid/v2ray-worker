@@ -291,11 +291,6 @@ export async function GetPanel(request: Request, env: Env): Promise<Response> {
           <button onclick="var tmp=document.getElementById('sub-link');tmp.select();tmp.setSelectionRange(0,99999);navigator.clipboard.writeText(tmp.value)" class="btn btn-primary p-1 mb-1">Copy</button>
         </div>
         <div class="px-4 py-2 bg-light">
-          <label id="custom-link-title" for="custom-link" class="form-label fw-bold"></label>
-          <input id="custom-link" readonly value="https://${url.hostname}/custom" class="p-1" style="width: calc(100% - 150px)">
-          <button onclick="var tmp=document.getElementById('custom-link');tmp.select();tmp.setSelectionRange(0,99999);navigator.clipboard.writeText(tmp.value)" class="btn btn-primary p-1 mb-1">Copy</button>
-        </div>
-        <div class="px-4 py-2 bg-light">
           <label id="clash-link-title" for="clash-link" class="form-label fw-bold"></label>
           <input id="clash-link" readonly value="https://${url.hostname}/clash" class="p-1" style="width: calc(100% - 150px)">
           <button onclick="var tmp=document.getElementById('clash-link');tmp.select();tmp.setSelectionRange(0,99999);navigator.clipboard.writeText(tmp.value)" class="btn btn-primary p-1 mb-1">Copy</button>
@@ -460,11 +455,6 @@ export async function GetPanel(request: Request, env: Env): Promise<Response> {
               <label id="sub-link-title" for="sub-link" class="form-label fw-bold"></label>
               <input id="sub-link" readonly value="https://${url.hostname}/sub" class="p-1" style="width: calc(100% - 150px)">
               <button onclick="var tmp=document.getElementById('sub-link');tmp.select();tmp.setSelectionRange(0,99999);navigator.clipboard.writeText(tmp.value)" class="btn btn-primary p-1 mb-1">Copy</button>
-            </div>
-            <div class="px-5 py-2 bg-light">
-              <label id="custom-link-title" for="custom-link" class="form-label fw-bold"></label>
-              <input id="custom-link" readonly value="https://${url.hostname}/custom" class="p-1" style="width: calc(100% - 150px)">
-              <button onclick="var tmp=document.getElementById('custom-link');tmp.select();tmp.setSelectionRange(0,99999);navigator.clipboard.writeText(tmp.value)" class="btn btn-primary p-1 mb-1">Copy</button>
             </div>
             <div class="px-5 py-2 bg-light">
               <label id="clash-link-title" for="clash-link" class="form-label fw-bold"></label>
