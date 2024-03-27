@@ -11,7 +11,7 @@ let proxyIP: string = ""
 
 export async function GetVlessConfigList(sni: string, addressList: Array<string>, max: number, env: Env) {
   uuid = getUUID(sni)
-  console.log("GetVlessConfigList", uuid)
+  // console.log("GetVlessConfigList", uuid)
   let configList: Array<Config> = []
   for (let i = 0; i < max; i++) {
     configList.push(GetVlessConfig(
@@ -54,7 +54,7 @@ export async function VlessOverWSHandler(request: Request, sni: string, env: Env
         return
       }
 
-      console.log("ProcessVlessHeader", uuid)
+      // console.log("ProcessVlessHeader", uuid)
       const {
         hasError,
         message,
