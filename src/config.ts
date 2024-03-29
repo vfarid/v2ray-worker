@@ -53,7 +53,7 @@ export function EncodeConfig(conf: Config): string {
         alpn: conf.alpn,
         fp: conf.fp,
       }
-      return `${config.type}://${Buffer.from(JSON.stringify(config), "utf-8").toString("base64")}`
+      return `vmess://${Buffer.from(JSON.stringify(config), "utf-8").toString("base64")}`
     } else if (conf.configType == "vless") {
       return `vless://${
         conf.uuid
