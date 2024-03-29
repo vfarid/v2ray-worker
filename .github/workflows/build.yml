@@ -28,8 +28,8 @@ jobs:
     - name: Build
       run: npx wrangler build
 
-    - name: Add Header
-      run: cp ${{ github.workspace }}/dist/worker.js ${{ github.workspace }}/dist/worker-original.js && echo -e "/*!\r\n  * v2ray Subscription Worker (${{ github.sha }})\r\n  * Copyright 2024 Vahid Farid (https://twitter.com/vahidfarid)\r\n  * Licensed under GPLv3 (https://github.com/vfarid/v2ray-worker/blob/main/Licence.md)\r\n  */\r\n\r\n$(cat ${{ github.workspace }}/dist/worker.js)" > ${{ github.workspace }}/dist/worker.js
+#    - name: Add Header
+#      run: cp ${{ github.workspace }}/dist/worker.js ${{ github.workspace }}/dist/worker-original.js && echo -e "/*!\r\n  * v2ray Subscription Worker (${{ github.sha }})\r\n  * Copyright 2024 Vahid Farid (https://twitter.com/vahidfarid)\r\n  * Licensed under GPLv3 (https://github.com/vfarid/v2ray-worker/blob/main/Licence.md)\r\n  */\r\n\r\n$(cat ${{ github.workspace }}/dist/worker.js)" > ${{ github.workspace }}/dist/worker.js
       
     - name: Upload to Artifacts
       uses: actions/upload-artifact@v4
