@@ -5,6 +5,7 @@ export const proxiesUri: string = "https://raw.githubusercontent.com/vfarid/v2ra
 export const defaultProtocols: Array<string> = [
   "vmess",
   "built-in-vless",
+  "vless",
 ]
 
 export const defaultALPNList: Array<string> = [
