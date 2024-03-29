@@ -619,7 +619,7 @@ export async function PostPanel(request: Request, env: Env): Promise<Response> {
       await env.settings.put("IncludeOriginalConfigs", formData.get("original")?.toString() || "no")
       await env.settings.put("IncludeMergedConfigs", formData.get("merged")?.toString() || "no")
       await env.settings.put("BlockPorn", formData.get("block_porn")?.toString() || "no")
-      await env.settings.put("EnableFragments", formData.get("enable_fragments")?.toString() || "yes")
+      await env.settings.put("EnableFragments", formData.get("enable_fragments")?.toString() || "no")
       
       let proxies = (await env.settings.get("ManualProxies"))?.split("\n").filter(t => t.trim().length > 0) || []
       if (!proxies.length) {
