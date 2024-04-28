@@ -1,22 +1,33 @@
 name: Deploy Worker
 on:
-  push:
-  pull_request:
   repository_dispatch:
+
 jobs:
   deploy:
     runs-on: ubuntu-latest
     timeout-minutes: 60
+
     steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-node@v3
-        with:
-          node-version: 18
-          cache: 'npm'
-      - run: npm i
-      - run: sed -i s/KV_NAME/${{ secrets.KV_NAME }}/g wrangler.toml
-      - name: Build & Deploy Worker
-        uses: cloudflare/wrangler-action@v3
-        with:
-          apiToken: ${{ secrets.CF_API_TOKEN }}
-          accountId: ${{ secrets.CF_ACCOUNT_ID }}
+    - name: Checkout code
+      uses: actions/checkout@v4
+      
+    - name: Setup Node.js
+      uses: actions/setup-node@v4
+      with:
+        node-version: "latest"
+        cache: "npm"
+
+    - name: Install modules
+      run: npm i wrangler@latest
+
+    - name: Build
+      run: npx wrangler build
+
+    - name: Add Header
+      run: cp ${{ github.workspace }}/dist/worker.js ${{ github.workspace }}/dist/worker-original.js && echo -e "/*!\n  * v2ray Subscription Worker (${{ github.sha }})\n  * Copyright 2024 Vahid Farid (https://twitter.com/vahidfarid)\n  * Licensed under GPLv3 (https://github.com/vfarid/v2ray-worker/blob/main/Licence.md)\n  */\n\n$(cat ${{ github.workspace }}/dist/worker.js)" > ${{ github.workspace }}/dist/worker.js
+
+    - name: Deploy
+      run: sed -i s/KV_NAME/${{ secrets.KV_NAME }}/g wrangler.toml
+      with:
+        apiToken: ${{ secrets.CF_API_TOKEN }}
+        accountId: ${{ secrets.CF_ACCOUNT_ID }}
