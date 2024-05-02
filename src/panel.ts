@@ -287,12 +287,12 @@ export async function GetPanel(request: Request, env: Env): Promise<Response> {
         ${htmlMessage}
         <div class="px-4 py-2 bg-light">
           <label id="sub-link-title" for="sub-link" class="form-label fw-bold"></label>
-          <input id="sub-link" readonly value="https://${url.hostname}/sub" class="p-1" style="width: calc(100% - 150px)">
+          <input id="sub-link" readonly value="${url.origin}/sub" class="p-1" style="width: calc(100% - 150px)">
           <button onclick="var tmp=document.getElementById('sub-link');tmp.select();tmp.setSelectionRange(0,99999);navigator.clipboard.writeText(tmp.value)" class="btn btn-primary p-1 mb-1">Copy</button>
         </div>
         <div class="px-4 py-2 bg-light">
           <label id="clash-link-title" for="clash-link" class="form-label fw-bold"></label>
-          <input id="clash-link" readonly value="https://${url.hostname}/clash" class="p-1" style="width: calc(100% - 150px)">
+          <input id="clash-link" readonly value="${url.origin}/clash" class="p-1" style="width: calc(100% - 150px)">
           <button onclick="var tmp=document.getElementById('clash-link');tmp.select();tmp.setSelectionRange(0,99999);navigator.clipboard.writeText(tmp.value)" class="btn btn-primary p-1 mb-1">Copy</button>
         </div>
         <form class="px-4 py-4 border-top border-2 border-primary" method="post">
@@ -445,12 +445,12 @@ export async function GetPanel(request: Request, env: Env): Promise<Response> {
             </div>
             <div class="px-5 py-2 bg-light">
               <label id="sub-link-title" for="sub-link" class="form-label fw-bold"></label>
-              <input id="sub-link" readonly value="https://${url.hostname}/sub" class="p-1" style="width: calc(100% - 150px)">
+              <input id="sub-link" readonly value="${url.origin}/sub" class="p-1" style="width: calc(100% - 150px)">
               <button onclick="var tmp=document.getElementById('sub-link');tmp.select();tmp.setSelectionRange(0,99999);navigator.clipboard.writeText(tmp.value)" class="btn btn-primary p-1 mb-1">Copy</button>
             </div>
             <div class="px-5 py-2 bg-light">
               <label id="clash-link-title" for="clash-link" class="form-label fw-bold"></label>
-              <input id="clash-link" readonly value="https://${url.hostname}/clash" class="p-1" style="width: calc(100% - 150px)">
+              <input id="clash-link" readonly value="${url.origin}/clash" class="p-1" style="width: calc(100% - 150px)">
               <button onclick="var tmp=document.getElementById('clash-link');tmp.select();tmp.setSelectionRange(0,99999);navigator.clipboard.writeText(tmp.value)" class="btn btn-primary p-1 mb-1">Copy</button>
             </div>
             <div id="you-can-use-your-worker-message" class="mx-5 my-2 p-4 border bg-success text-white fw-bold text-center"></div>
