@@ -10,7 +10,7 @@ export async function GetPanel(request: Request, env: Env): Promise<Response> {
     const token: string | null = await env.settings.get("Token")
 
     if (hash && url.searchParams.get("token") != token) {
-      return Response.redirect(`${url.protocol}//${url.hostname}${url.port != "443" ? ":" + url.port : ""}/login`, 302)
+      return Response.redirect(`${url.origin}/login`, 302)
     }
 
     const settingsVersion: string = await env.settings.get("Version") || "2.0"
@@ -27,12 +27,20 @@ export async function GetPanel(request: Request, env: Env): Promise<Response> {
     const configs: Array<string> = (await env.settings.get("Configs"))?.split("\n").filter(t => t.trim().length > 0) || []
     const includeOriginalConfigs: string = await env.settings.get("IncludeOriginalConfigs") || "yes"
     const includeMergedConfigs: string = await env.settings.get("IncludeMergedConfigs") || "yes"
-    const enableFragments: string = await env.settings.get("EnableFragments") || "yes"
+    const enableFragments: string = await env.settings.get("EnableFragments") || "no"
     const blockPorn: string = await env.settings.get("BlockPorn") || "no"
     const providers = (await env.settings.get("Providers"))?.split("\n").filter(t => t.trim().length > 0) || []
-    const proxies = (await env.settings.get("ManualProxies"))?.split("\n").filter(t => t.trim().length > 0) || []
+    const countries = (await env.settings.get("Countries"))?.split(",").filter(t => t.trim().length > 0) || []
 
-    var htmlMessage = ""
+    let allCountries = await fetch("https://raw.githubusercontent.com/vfarid/v2ray-worker/main/resources/proxy-list.txt").then(r => r.text()).then(t => {
+      return t.trim().split("\n").map(t => {
+        const arr = t.split(",")
+        return arr.length > 0 ? arr[1]?.toString().trim().toUpperCase() : ""
+      }).filter(t => t)
+    })
+    allCountries = [...new Set(allCountries)].sort()
+    
+    let htmlMessage = ""
     const message = url.searchParams.get("message")
     if (message == "success") {
       htmlMessage = `<div class="p-1 bg-success text-white fw-bold text-center">Settings saved successfully.<br/>تنظیمات با موفقیت ذخیره شد.</div>`
@@ -40,7 +48,7 @@ export async function GetPanel(request: Request, env: Env): Promise<Response> {
       htmlMessage = `<div class="p-1 bg-danger text-white fw-bold text-center">Failed to save settings!<br/>خطا در ذخیره‌ی تنظیمات!</div>`
     }
 
-    var passwordSection = ""
+    let passwordSection = ""
     if (hash) {
       passwordSection = `
       <div class="mb-3 p-1">
@@ -69,7 +77,7 @@ export async function GetPanel(request: Request, env: Env): Promise<Response> {
       `
     }
 
-    var htmlContent  = `
+    let htmlContent  = `
     <!DOCTYPE html>
     <html>
     <head>
@@ -96,18 +104,14 @@ export async function GetPanel(request: Request, env: Env): Promise<Response> {
           });
           document.getElementById('providers-check').dispatchEvent(new Event("change"));
 
-          document.getElementById('proxies-check').addEventListener("change", () => {
-            if (document.getElementById('proxies-check').checked) {
-              document.getElementById('proxies').style.display = ""
-              document.getElementById('proxies-remarks').style.display = ""
-              document.getElementById('proxies-auto-title').style.display = "none"
+          document.getElementById('countries-check').addEventListener("change", () => {
+            if (document.getElementById('countries-check').checked) {
+              document.getElementById('countries-div').style.display = ""
             } else {
-              document.getElementById('proxies').style.display = "none"
-              document.getElementById('proxies-remarks').style.display = "none"
-              document.getElementById('proxies-auto-title').style.display = ""
+              document.getElementById('countries-div').style.display = "none"
             }
           });
-          document.getElementById('proxies-check').dispatchEvent(new Event("change"));
+          document.getElementById('countries-check').dispatchEvent(new Event("change"));
 
           document.getElementById('clean-ips-check').addEventListener("change", () => {
             if (document.getElementById('clean-ips-check').checked) {
@@ -227,9 +231,8 @@ export async function GetPanel(request: Request, env: Env): Promise<Response> {
             "providers-title": "Config Providers",
             "providers-auto-title": "Auto load from github",
             "providers-remarks": "One link per line (base64, yaml, raw).",
-            "proxies-title": "Built-in VLESS Proxies",
-            "proxies-auto-title": "Auto load from github",
-            "proxies-remarks": "One ip/domain per line.",
+            "countries-title": "Limit By Country (Only for websites beind Cloudflare Network)",
+            "countries-all-title": "If you check this option, all protocols will be deactivated except built-in vless protocols.",
             "personal-configs-title": "Private Configs",
             "personal-configs-remarks": "One config per line.",
             "block-porn-title": "‌Block Porn",
@@ -261,9 +264,8 @@ export async function GetPanel(request: Request, env: Env): Promise<Response> {
             "providers-title": "تامین کنندگان کانفیگ",
             "providers-auto-title": "دریافت خودکار از گیت‌هاب",
             "providers-remarks": "در هر سطر یک لینک وارد کنید (base64, yaml, raw).",
-            "proxies-title": "پروکسی‌های VLESS روی ورکر",
-            "proxies-auto-title": "دریافت خودکار از گیت‌هاب",
-            "proxies-remarks": "در هر سطر یک آی‌پی/دامین وارد کنید.",
+            "countries-title": "محدود کردن کشور (فقط برای وبسایت‌های پشت شبکه کلادفلر)",
+            "countries-all-title": "در صورت فعال‌سازی این گزینه، تمام پروتکل‌ها بجز vless های داخلی ورکر غیرفعال می‌شوند.",
             "personal-configs-title": "کانفیگ‌های خصوصی",
             "personal-configs-remarks": "در هر سطر یک کانفیگ وارد کنید.",
             "block-porn-title": "مسدودسازی پورن",
@@ -288,12 +290,12 @@ export async function GetPanel(request: Request, env: Env): Promise<Response> {
         <div class="px-4 py-2 bg-light">
           <label id="sub-link-title" for="sub-link" class="form-label fw-bold"></label>
           <input id="sub-link" readonly value="${url.origin}/sub" class="p-1" style="width: calc(100% - 150px)">
-          <button onclick="var tmp=document.getElementById('sub-link');tmp.select();tmp.setSelectionRange(0,99999);navigator.clipboard.writeText(tmp.value)" class="btn btn-primary p-1 mb-1">Copy</button>
+          <button onclick="let tmp=document.getElementById('sub-link');tmp.select();tmp.setSelectionRange(0,99999);navigator.clipboard.writeText(tmp.value)" class="btn btn-primary p-1 mb-1">Copy</button>
         </div>
         <div class="px-4 py-2 bg-light">
           <label id="clash-link-title" for="clash-link" class="form-label fw-bold"></label>
           <input id="clash-link" readonly value="${url.origin}/clash" class="p-1" style="width: calc(100% - 150px)">
-          <button onclick="var tmp=document.getElementById('clash-link');tmp.select();tmp.setSelectionRange(0,99999);navigator.clipboard.writeText(tmp.value)" class="btn btn-primary p-1 mb-1">Copy</button>
+          <button onclick="let tmp=document.getElementById('clash-link');tmp.select();tmp.setSelectionRange(0,99999);navigator.clipboard.writeText(tmp.value)" class="btn btn-primary p-1 mb-1">Copy</button>
         </div>
         <form class="px-4 py-4 border-top border-2 border-primary" method="post">
           <div class="mb-1 p-1">
@@ -358,6 +360,14 @@ export async function GetPanel(request: Request, env: Env): Promise<Response> {
             <div id="enable-fragments-remarks" class="form-text"></div>
           </div>
           <div class="mb-1 p-1">
+            <input type="checkbox" class="form-check-input" name="countries_check" value="1" id="countries-check" ${countries.length ? "checked" : ""}>
+            <label id="countries-title" for="countries-check" class="form-label fw-bold"></label>
+            <div id="countries-all-title" class="form-text"></div>
+            <div id="countries-div" class="px-4 py-1">
+              ${allCountries.map(t => `<input type="checkbox" class="form-check-input" id="countries-check-${t.toLowerCase()}" name="countries[]" value="${t}" ${countries.length && countries.includes(t) ? "checked" : ""}> <label for="countries-check-${t.toLowerCase()}" class="form-label">${t}</label>`).join(` &nbsp; &nbsp;`)}
+            </div>
+          </div>
+          <div class="mb-1 p-1">
             <input type="checkbox" class="form-check-input" name="block_porn" value="yes" id="block-porn" ${blockPorn == "yes" ? "checked" : ""}>
             <label id="block-porn-title" for="block-porn" class="form-label fw-bold"></label>
             <div id="block-porn-remarks" class="form-text"></div>
@@ -380,13 +390,6 @@ export async function GetPanel(request: Request, env: Env): Promise<Response> {
             <span id="providers-auto-title" class="text-info"></span>
             <textarea rows="7" name="providers" style="display: none" class="form-control" id="providers">${providers.join("\n")}</textarea>
             <div id="providers-remarks"  style="display: none" class="form-text"></div>
-          </div>
-          <div class="mb-1 p-1">
-            <input type="checkbox" class="form-check-input" name="proxies_check" value="1" id="proxies-check" ${proxies.length ? "checked" : ""}>
-            <label id="proxies-title" for="proxies-check" class="form-label fw-bold"></label> &nbsp; &nbsp;
-            <span id="proxies-auto-title" class="text-info"></span>
-            <textarea rows="7" name="proxies" style="display: none" class="form-control" id="proxies">${proxies.join("\n")}</textarea>
-            <div id="proxies-remarks"  style="display: none" class="form-text"></div>
           </div>
           <div class="mb-1 p-1">
             <input type="checkbox" class="form-check-input" name="configs_check" value="1" id="configs-check" ${configs.length ? "checked" : ""}>
@@ -446,12 +449,12 @@ export async function GetPanel(request: Request, env: Env): Promise<Response> {
             <div class="px-5 py-2 bg-light">
               <label id="sub-link-title" for="sub-link" class="form-label fw-bold"></label>
               <input id="sub-link" readonly value="${url.origin}/sub" class="p-1" style="width: calc(100% - 150px)">
-              <button onclick="var tmp=document.getElementById('sub-link');tmp.select();tmp.setSelectionRange(0,99999);navigator.clipboard.writeText(tmp.value)" class="btn btn-primary p-1 mb-1">Copy</button>
+              <button onclick="let tmp=document.getElementById('sub-link');tmp.select();tmp.setSelectionRange(0,99999);navigator.clipboard.writeText(tmp.value)" class="btn btn-primary p-1 mb-1">Copy</button>
             </div>
             <div class="px-5 py-2 bg-light">
               <label id="clash-link-title" for="clash-link" class="form-label fw-bold"></label>
               <input id="clash-link" readonly value="${url.origin}/clash" class="p-1" style="width: calc(100% - 150px)">
-              <button onclick="var tmp=document.getElementById('clash-link');tmp.select();tmp.setSelectionRange(0,99999);navigator.clipboard.writeText(tmp.value)" class="btn btn-primary p-1 mb-1">Copy</button>
+              <button onclick="let tmp=document.getElementById('clash-link');tmp.select();tmp.setSelectionRange(0,99999);navigator.clipboard.writeText(tmp.value)" class="btn btn-primary p-1 mb-1">Copy</button>
             </div>
             <div id="you-can-use-your-worker-message" class="mx-5 my-2 p-4 border bg-success text-white fw-bold text-center"></div>
             <div class="mx-5 my-2 p-1 border bg-warning">
@@ -544,7 +547,7 @@ export async function GetPanel(request: Request, env: Env): Promise<Response> {
             "page-title": "V2ray Worker Control Panel",
             "text-version": "Version",
             "sub-link-title": "Your subscription link for v2ray clients (v2rayN, v2rayNG, v2rayA, Nekobox, Nekoray, V2Box...)",
-            "custom-link-title": "Your subscription link for custom configs",
+            // "custom-link-title": "Your subscription link for custom configs",
             "clash-link-title": "Your subscription link for clash clients (Clash, ClashX, ClashMeta...)",
             "you-can-use-your-worker-message": "You can continue using your worker without control panel.",
             "you-need-namespace-message": "The 'settings' namespace is not defined! Please define a namespace named 'settings' in your worker 'KV Namespace Bindings' using bellow link, as described in the video and relad the page afterward.",  
@@ -555,7 +558,7 @@ export async function GetPanel(request: Request, env: Env): Promise<Response> {
             "page-title": "پنل کنترل ورکر v2ray",
             "text-version": "نسخه",
             "sub-link-title": "لینک ثبت نام شما برای کلاینت‌های v2rayN, v2rayNG, v2rayA, Nekobox, Nekoray, V2Box و...",
-            "custom-link-title": "لینک ثبت نام شما برای کانفیگ‌های Custom",
+            // "custom-link-title": "لینک ثبت نام شما برای کانفیگ‌های Custom",
             "clash-link-title": "لینک ثبت نام شما برای کلاینت‌های کلش Clash, ClashX, ClashMeta و...",
             "you-can-use-your-worker-message": "شما می‌توانید از ورکر خود بدون پنل کنترل استفاده نمایید.",
             "you-need-namespace-message": "فضای نام settings تعریف نشده است. لطفا مطابق ویدیوی آموزشی، از طریق لینک‌های زیر ابتدا در بخش KV یک فضای نام به اسم settings ایجاد کنید و سپس ازطریق بخش 'KV Namespace Bindings' آن را با همان نام settings به ورکر خود متصل کنید و پس از ذخیره، مجددا پنل را باز کنید.",
@@ -578,25 +581,25 @@ export async function GetPanel(request: Request, env: Env): Promise<Response> {
 
 export async function PostPanel(request: Request, env: Env): Promise<Response> {
   const url: URL = new URL(request.url)
-  var token: string | null = await env.settings.get("Token")
+  let token: string | null = await env.settings.get("Token")
   try {
     const formData = await request.formData()
 
-    var hashedPassword: string | null = await env.settings.get("Password")
+    let hashedPassword: string | null = await env.settings.get("Password")
 
     if (hashedPassword && url.searchParams.get("token") != token) {
-      return Response.redirect(`${url.protocol}//${url.hostname}${url.port != "443" ? ":" + url.port : ""}/login`, 302)
+      return Response.redirect(`${url.origin}/login`, 302)
     }
 
     if (formData.get("reset_password")) {
       await env.settings.delete("Password")
       await env.settings.delete("Token")
-      return Response.redirect(`${url.protocol}//${url.hostname}${url.port != "443" ? ":" + url.port : ""}?message=success`, 302)
+      return Response.redirect(`${url.origin}?message=success`, 302)
     } else if (formData.get("save")) {
       const password: string = formData.get("password")?.toString() || ""
       if (password) {
         if (password.length < 6 || password !== formData.get("password_confirmation")) {
-          return Response.redirect(`${url.protocol}//${url.hostname}${url.port != "443" ? ":" + url.port : ""}?message=invalid-password`, 302)
+          return Response.redirect(`${url.origin}?message=invalid-password`, 302)
         }
         hashedPassword = await bcrypt.hash(password, 10);
 
@@ -613,19 +616,13 @@ export async function PostPanel(request: Request, env: Env): Promise<Response> {
       await env.settings.put("ALPNs", formData.get("alpn_list_check")?.toString() ? formData.get("alpn_list")?.toString().trim().split("\n").map(str => str.trim()).join("\n") || "" : "")
       await env.settings.put("FingerPrints", formData.get("fp_list_check")?.toString() ? formData.get("fp_list")?.toString().trim().split("\n").map(str => str.trim()).join("\n") || "" : "")
       await env.settings.put("Providers", formData.get("providers_check")?.toString() ? formData.get("providers")?.toString().trim().split("\n").map(str => str.trim()).join("\n") || "" : "")
-      await env.settings.put("ManualProxies", formData.get("proxies_check")?.toString() ? formData.get("proxies")?.toString().trim().split("\n").map(str => str.trim()).join("\n") || "" : "")
+      await env.settings.put("Countries", formData.get("countries_check")?.toString() ? formData.getAll("countries[]")?.join(",") || "" : "")
       await env.settings.put("CleanDomainIPs", formData.get("clean_ips_check")?.toString() ? formData.get("clean_ips")?.toString().trim().split("\n").map(str => str.trim()).join("\n") || "" : "")
       await env.settings.put("Configs", formData.get("configs_check")?.toString() ? formData.get("configs")?.toString().trim().split("\n").map(str => str.trim()).join("\n") || "" : "")
       await env.settings.put("IncludeOriginalConfigs", formData.get("original")?.toString() || "no")
       await env.settings.put("IncludeMergedConfigs", formData.get("merged")?.toString() || "no")
       await env.settings.put("BlockPorn", formData.get("block_porn")?.toString() || "no")
       await env.settings.put("EnableFragments", formData.get("enable_fragments")?.toString() || "no")
-      
-      let proxies = (await env.settings.get("ManualProxies"))?.split("\n").filter(t => t.trim().length > 0) || []
-      if (!proxies.length) {
-        proxies = await fetch("https://raw.githubusercontent.com/vfarid/v2ray-worker/main/resources/proxy-list.txt").then(r => r.text()).then(t => t.trim().split("\n").filter(t => t.trim().length > 0))
-      }
-      await env.settings.put("Proxies", proxies.join("\n"))
       await env.settings.put("Version", version)
     } else {
       await env.settings.delete("MaxConfigs")
@@ -633,7 +630,7 @@ export async function PostPanel(request: Request, env: Env): Promise<Response> {
       await env.settings.delete("ALPNs")
       await env.settings.delete("FingerPrints")
       await env.settings.delete("Providers")
-      await env.settings.delete("ManualProxies")
+      await env.settings.delete("Countries")
       await env.settings.delete("CleanDomainIPs")
       await env.settings.delete("Configs")
       await env.settings.delete("IncludeOriginalConfigs")
@@ -645,8 +642,8 @@ export async function PostPanel(request: Request, env: Env): Promise<Response> {
       await env.settings.delete("EnableFragments")
     }
 
-    return Response.redirect(`${url.protocol}//${url.hostname}${url.port != "443" ? ":" + url.port : ""}?message=success${token ? "&token=" + token : ""}`, 302)
+    return Response.redirect(`${url.origin}?message=success${token ? "&token=" + token : ""}`, 302)
   } catch (e) {
-    return Response.redirect(`${url.protocol}//${url.hostname}${url.port != "443" ? ":" + url.port : ""}?message=error${token ? "&token=" + token : ""}`, 302)
+    return Response.redirect(`${url.origin}?message=error${token ? "&token=" + token : ""}`, 302)
   }
 }
