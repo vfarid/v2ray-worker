@@ -16,6 +16,7 @@ export interface VlessHeader {
   rawDataIndex: number,
   vlessVersion: Uint8Array,
   isUDP: boolean,
+  isMUX: boolean,
 }
 
 export interface UDPOutbound {
