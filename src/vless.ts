@@ -1,6 +1,6 @@
 import { UUID } from "crypto";
 import { connect } from 'cloudflare:sockets'
-import { GetVlessConfig, MuddleDomain, getProxies, getUUID } from "./helpers"
+import { GetVlessConfig, MuddleDomain, getUUID } from "./helpers"
 import { cfPorts } from "./variables"
 import { RemoteSocketWrapper, CustomArrayBuffer, VlessHeader, UDPOutbound, Config, Env } from "./interfaces"
 
@@ -8,10 +8,16 @@ const WS_READY_STATE_OPEN: number = 1
 const WS_READY_STATE_CLOSING: number = 2
 let uuid: string = ""
 let proxyIP: string = ""
+let proxyList: Array<string> = []
+let blockPorn: string = ""
+let filterCountries: string = ""
+let countries: Array<string> = []
 
 export async function GetVlessConfigList(sni: string, addressList: Array<string>, max: number, env: Env) {
+  filterCountries = ""
+  blockPorn = ""
+  proxyList = []
   uuid = getUUID(sni)
-  // console.log("GetVlessConfigList", uuid)
   let configList: Array<Config> = []
   for (let i = 0; i < max; i++) {
     configList.push(GetVlessConfig(
@@ -29,7 +35,6 @@ export async function GetVlessConfigList(sni: string, addressList: Array<string>
 export async function VlessOverWSHandler(request: Request, sni: string, env: Env) {
   uuid = getUUID(sni)
   const [client, webSocket]: Array<WebSocket> = Object.values(new WebSocketPair)
-
   webSocket.accept()
 
   let address: string = ""
@@ -54,7 +59,6 @@ export async function VlessOverWSHandler(request: Request, sni: string, env: Env
         return
       }
 
-      // console.log("ProcessVlessHeader", uuid)
       const {
         hasError,
         message,
@@ -64,6 +68,7 @@ export async function VlessOverWSHandler(request: Request, sni: string, env: Env
         rawDataIndex,
         vlessVersion = new Uint8Array([0, 0]),
         isUDP,
+        isMUX,
       } = ProcessVlessHeader(chunk, uuid)
       
       address = addressRemote
@@ -78,6 +83,8 @@ export async function VlessOverWSHandler(request: Request, sni: string, env: Env
         } else {
           throw new Error('UDP proxy only enable for DNS which is port 53')
         }
+      } else if (isMUX) {
+        throw new Error('MUX is not supported!')
       }
 
       const vlessResponseHeader: Uint8Array = new Uint8Array([vlessVersion[0], 0])
@@ -155,6 +162,7 @@ function ProcessVlessHeader(vlessBuffer: ArrayBuffer, uuid: string): VlessHeader
   const version: Uint8Array = new Uint8Array(vlessBuffer.slice(0, 1))
   let isValidUser: boolean = false
   let isUDP: boolean = false
+  let isMUX: boolean = false
   
   if (Stringify(new Uint8Array(vlessBuffer.slice(1, 17))) === uuid) {
     isValidUser = true
@@ -176,6 +184,8 @@ function ProcessVlessHeader(vlessBuffer: ArrayBuffer, uuid: string): VlessHeader
   if (command === 1) {
   } else if (command === 2) {
     isUDP = true
+  } else if (command === 3) {
+    isMUX = true
   } else {
     return {
       hasError: true,
@@ -245,6 +255,7 @@ function ProcessVlessHeader(vlessBuffer: ArrayBuffer, uuid: string): VlessHeader
     rawDataIndex: addressValueIndex + addressLength,
     vlessVersion: version,
     isUDP: isUDP,
+    isMUX: isMUX,
   } as VlessHeader
 }
 
@@ -264,8 +275,11 @@ async function HandleUDPOutbound(webSocket: WebSocket, vlessResponseHeader: Arra
     }
   })
 
+  if (blockPorn == "") {
+    blockPorn = await env.settings.get("BlockPorn") || 'no'
+  }
+  
   // only handle dns udp for now
-  const blockPorn = await env.settings.get("BlockPorn")
   transformStream.readable.pipeTo(new WritableStream({
     async write(chunk: any) {
       const resp = await fetch(blockPorn == "yes" ? "https://1.1.1.3/dns-query": "https://1.1.1.1/dns-query", {
@@ -298,7 +312,9 @@ async function HandleUDPOutbound(webSocket: WebSocket, vlessResponseHeader: Arra
 }
 
 async function HandleTCPOutbound(remoteSocket: RemoteSocketWrapper, addressRemote: string, portRemote: number, rawClientData: Uint8Array, webSocket: WebSocket, vlessResponseHeader: Uint8Array, env: Env): Promise<void> {
-  let retryCount = 2
+  const maxRetryCount = 5
+  let retryCount = 0;
+  
   async function connectAndWrite(address: string, port: number) {
     const socketAddress: SocketAddress = {
       hostname: address,
@@ -317,16 +333,30 @@ async function HandleTCPOutbound(remoteSocket: RemoteSocketWrapper, addressRemot
   }
 
   async function retry() {
-    const proxyList = (await env.settings.get("Proxies"))?.split("\n").filter(t => t.trim().length > 0) || []
-    if (proxyList.length) {
-      proxyIP = proxyList[Math.floor(Math.random() * proxyList.length)]
+    retryCount++
+    if (retryCount > maxRetryCount) {
+      return
     }
 
-    const tcpSocket: Socket = await connectAndWrite(proxyIP || addressRemote, portRemote)
-    tcpSocket.closed.catch((error: any) => { }).finally(() => {
-      SafeCloseWebSocket(webSocket)
-    })
-    RemoteSocketToWS(tcpSocket, webSocket, vlessResponseHeader, null)
+    if (!proxyList.length) {
+      countries = (await env.settings.get("Countries"))?.split(",").filter(t => t.trim().length > 0) || []        
+      proxyList = await fetch("https://raw.githubusercontent.com/vfarid/v2ray-worker/main/resources/proxy-list.txt").then(r => r.text()).then(t => t.trim().split("\n").filter(t => t.trim().length > 0))
+      if (countries.length > 0) {
+        proxyList = proxyList.filter(t => {
+          const arr = t.split(",")
+          if (arr.length > 0) {
+            return countries.includes(arr[1])
+          }
+        })
+      }
+      proxyList = proxyList.map(ip => ip.split(",")[0])
+      console.log(proxyList)
+    }
+    if (proxyList.length > 0) {
+      proxyIP = proxyList[Math.floor(Math.random() * proxyList.length)]
+      const tcpSocket: Socket = await connectAndWrite(proxyIP, portRemote)
+      RemoteSocketToWS(tcpSocket, webSocket, vlessResponseHeader, retry)
+    }
   }
 
   const tcpSocket: Socket = await connectAndWrite(addressRemote, portRemote)
@@ -340,16 +370,18 @@ async function RemoteSocketToWS(remoteSocket: Socket, webSocket: WebSocket, vles
     .pipeTo(
       new WritableStream({
         async write(chunk: Uint8Array, controller: WritableStreamDefaultController) {
-          hasIncomingData = true
-          if (webSocket.readyState !== WS_READY_STATE_OPEN) {
-            controller.error("webSocket.readyState is not open, maybe close")
-          }
-          if (vlessHeader) {
-            webSocket.send(await new Blob([vlessHeader, chunk]).arrayBuffer())
-            vlessHeader = null
-          } else {
-            webSocket.send(chunk)
-          }
+          try {
+            hasIncomingData = true
+            if (webSocket.readyState !== WS_READY_STATE_OPEN) {
+              controller.error("webSocket.readyState is not open, maybe close")
+            }
+            if (vlessHeader) {
+              webSocket.send(await new Blob([vlessHeader, chunk]).arrayBuffer())
+              vlessHeader = null
+            } else {
+              webSocket.send(chunk)
+            }
+          } catch (e) { }
         },
         abort(reason: any) {
           // console.error("remoteConnection!.readable abort", reason)
