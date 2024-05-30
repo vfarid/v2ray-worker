@@ -28,8 +28,9 @@ export async function GetConfigList(url: URL, env: Env): Promise<Array<Config>> 
       protocols = await env.settings.get("Protocols").then(val => {return val ? val.split("\n") : []})
     }
     const blockPorn = await env.settings.get("BlockPorn") == "yes"
+    const limitCountries = ((await env.settings.get("Countries"))?.split(",") || []).length > 0
     
-    if (blockPorn) {
+    if (blockPorn || limitCountries) {
       protocols = ["built-in-vless"]
       maxConfigs = 0
     }
