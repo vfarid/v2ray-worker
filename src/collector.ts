@@ -40,17 +40,20 @@ export async function GetConfigList(url: URL, env: Env): Promise<Array<Config>> 
     }
 
     providers = (await env.settings.get("Providers"))?.split("\n").filter(t => t.trim().length > 0) || []
+    myConfigs = (await env.settings.get("Configs"))?.split("\n").filter(t => t.trim().length > 0) || []
     alpnList = (await env.settings.get("ALPNs"))?.split("\n").filter(t => t.trim().length > 0) || []
     fingerPrints = (await env.settings.get("FingerPrints"))?.split("\n").filter(t => t.trim().length > 0) || []
     includeOriginalConfigs = (await env.settings.get("IncludeOriginalConfigs") || "yes") == "yes"
-    includeMergedConfigs = ((await env.settings.get("IncludeMergedConfigs") || "yes") == "yes") && (protocols.includes("vmess") || protocols.includes("vless"))
+    includeMergedConfigs = ((await env.settings.get("IncludeMergedConfigs") || "yes") == "yes") && (protocols.includes("vmess") || protocols.includes("vless") || myConfigs.length > 0)
     cleanDomainIPs = (await env.settings.get("CleanDomainIPs"))?.split("\n").filter(t => t.trim().length > 0) || []
     settingsNotAvailable = (await env.settings.get("MaxConfigs")) === null
-    myConfigs = (await env.settings.get("Configs"))?.split("\n").filter(t => t.trim().length > 0) || []
     enableFragments = await env.settings.get("EnableFragments") == "yes"
   } catch { }
 
-  protocols = protocols.length ? protocols : defaultProtocols
+  if (!protocols.length && !myConfigs) {
+    protocols = defaultProtocols
+  }
+
   alpnList = alpnList.length ? alpnList : defaultALPNList
   fingerPrints = fingerPrints.length ? fingerPrints : defaultPFList
   cleanDomainIPs = cleanDomainIPs.length ? cleanDomainIPs : [MuddleDomain(url.hostname)]
@@ -169,9 +172,17 @@ export async function GetConfigList(url: URL, env: Env): Promise<Array<Config>> 
   }
 
   if (myConfigs.length) {
-    finalConfigList = finalConfigList.concat(
-      myConfigs.map(DecodeConfig)
-    )
+    let myValidConfigs: Array<any> = myConfigs.map(DecodeConfig).filter(ValidateConfig)
+    if (includeOriginalConfigs || !includeMergedConfigs) {
+      finalConfigList = finalConfigList.concat(myValidConfigs)
+    }
+    if (includeMergedConfigs) {
+      let myMergedConfigs: Array<any> = myValidConfigs.map((cnf: any) => MixConfig(cnf, url, address, "my"))
+      console.log(myValidConfigs, myMergedConfigs)
+      myMergedConfigs = myMergedConfigs.filter((cnf: any) => cnf?.merged && cnf?.remarks)
+      console.log(myValidConfigs, myMergedConfigs)
+      finalConfigList = finalConfigList.concat(myMergedConfigs)
+    }
   }
 
   finalConfigList = RemoveDuplicateConfigs(finalConfigList.filter(ValidateConfig))
@@ -198,7 +209,6 @@ export async function GetConfigList(url: URL, env: Env): Promise<Array<Config>> 
     }
     return conf
   })
-  console.log(finalConfigList)
 
   return finalConfigList
 }
