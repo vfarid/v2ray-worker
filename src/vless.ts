@@ -1,7 +1,6 @@
-import { UUID } from "crypto";
 import { connect } from 'cloudflare:sockets'
 import { GetVlessConfig, MuddleDomain, getUUID } from "./helpers"
-import { cfPorts } from "./variables"
+import { cfPorts, proxiesUri } from "./variables"
 import { RemoteSocketWrapper, CustomArrayBuffer, VlessHeader, UDPOutbound, Config, Env } from "./interfaces"
 
 const WS_READY_STATE_OPEN: number = 1
@@ -16,7 +15,7 @@ export async function GetVlessConfigList(sni: string, addressList: Array<string>
   filterCountries = ""
   blockPorn = ""
   proxyList = []
-  const uuid: UUID = getUUID(sni)
+  const uuid = getUUID(sni)
   let configList: Array<Config> = []
   for (let i = 0; i < max; i++) {
     configList.push(GetVlessConfig(
@@ -339,7 +338,7 @@ async function HandleTCPOutbound(remoteSocket: RemoteSocketWrapper, addressRemot
 
     if (!proxyList.length) {
       countries = (await env.settings.get("Countries"))?.split(",").filter(t => t.trim().length > 0) || []        
-      proxyList = await fetch("https://raw.githubusercontent.com/vfarid/v2ray-worker/main/resources/proxy-list.txt").then(r => r.text()).then(t => t.trim().split("\n").filter(t => t.trim().length > 0))
+      proxyList = await fetch(proxiesUri).then(r => r.text()).then(t => t.trim().split("\n").filter(t => t.trim().length > 0))
       if (countries.length > 0) {
         proxyList = proxyList.filter(t => {
           const arr = t.split(",")
@@ -432,8 +431,8 @@ function IsValidVlessUUID(uuid: string): boolean {
   return /^[0-9a-f]{8}-[0-9a-f]{4}-[5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(uuid);
 }
 
-function Stringify(arr: Uint8Array, offset: number = 0): UUID {
-  const uuid: UUID = UnsafeStringify(arr, offset);
+function Stringify(arr: Uint8Array, offset: number = 0): string {
+  const uuid = UnsafeStringify(arr, offset);
   if (!IsValidVlessUUID(uuid)) {
     throw TypeError("Stringified UUID is invalid");
   }
@@ -445,7 +444,7 @@ for (let i = 0; i < 256; ++i) {
   byteToHex.push((i + 256).toString(16).slice(1));
 }
 
-function UnsafeStringify(arr: Uint8Array, offset = 0) : UUID {
+function UnsafeStringify(arr: Uint8Array, offset = 0) : string {
   return `${
     byteToHex[arr[offset + 0]] + byteToHex[arr[offset + 1]] + byteToHex[arr[offset + 2]] + byteToHex[arr[offset + 3]]
   }-${
@@ -456,5 +455,5 @@ function UnsafeStringify(arr: Uint8Array, offset = 0) : UUID {
     byteToHex[arr[offset + 8]] + byteToHex[arr[offset + 9]]
   }-${
     byteToHex[arr[offset + 10]] + byteToHex[arr[offset + 11]] + byteToHex[arr[offset + 12]] + byteToHex[arr[offset + 13]] + byteToHex[arr[offset + 14]] + byteToHex[arr[offset + 15]]
-  }`.toLowerCase() as UUID;
+  }`.toLowerCase();
 }
