@@ -1,10 +1,11 @@
 import { VlessOverWSHandler } from "./vless"
+import { TrojanOverWSHandler } from "./trojan"
 import { GetPanel, PostPanel } from "./panel"
 import { GetLogin, PostLogin } from "./auth"
 import { GetConfigList } from "./collector"
 import { ToYamlSubscription } from "./clash"
 import { ToBase64Subscription, ToRawSubscription } from "./sub"
-import { ToCustomConfigSubscription } from "./custom"
+// import { ToCustomConfigSubscription } from "./custom"
 import { Env, Config } from "./interfaces"
 
 let panelPath = ""
@@ -14,6 +15,7 @@ export default {
     const url: URL = new URL(request.url)
     const path: string = url.pathname.replace(/^\/|\/$/g, "")
     const lcPath = path.toLowerCase()
+
     if (["sub", "clash", /*"custom", */"raw"].includes(lcPath)) {
       const configList: Array<Config> = await GetConfigList(url, env)
       if (lcPath == "clash") {
@@ -27,6 +29,8 @@ export default {
       }
     } else if (lcPath == "vless-ws") {
       return VlessOverWSHandler(request, url.hostname, env);
+    } else if (lcPath == "trojan-ws") {
+      return TrojanOverWSHandler(request, url.hostname, env);
     } else if (lcPath == "login") {
       if (request.method === "GET") {
         return GetLogin(request, env)
