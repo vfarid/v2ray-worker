@@ -7,7 +7,8 @@ export function MixConfig(cnf: Config, url: URL, address: string, provider: stri
 	const hostname: string = MuddleDomain(url.hostname)
   try {
 		let conf = {...cnf};
-		if (!["ws", "h2", "http"].includes(conf.network)) {
+    const type = conf.network || conf.type || ""
+		if (!["ws", "h2", "http"].includes(type)) {
 			throw new Error("Network is not supported!")
 		} else if (!cfPorts.includes(conf.port)) {
 			throw new Error("Port is not matched!")
@@ -64,7 +65,7 @@ export function EncodeConfig(conf: Config): string {
       }?encryption=${
         encodeURIComponent(conf.encryption || "none")
       }&type=${
-        conf.network
+        conf.type || conf.network
       }${
         conf.path ? "&path=" + encodeURIComponent(conf.path) : ""
       }${
