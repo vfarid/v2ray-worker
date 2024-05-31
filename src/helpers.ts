@@ -1,4 +1,4 @@
-import { UUID } from "crypto"
+import { UUID, createHash } from "crypto"
 import { v5 as uuidv5 } from "uuid"
 import { Env, Config } from "./interfaces"
 import { providersUri, proxiesUri } from "./variables"
@@ -42,6 +42,24 @@ export function GetVlessConfig(no: number, uuid: UUID, sni: string, address: str
 		uuid: uuid,
 		host: sni,
 		path: "vless-ws/?ed=2048",
+		address: address,
+	} as Config
+}
+
+export function GetTrojanConfig(no: number, sha224Password: string, sni: string, address: string, port: number) {
+	if (address.toLowerCase() == sni.toLowerCase()) {
+    address = sni
+  }
+  return {
+		remarks: `${no}-trojan-worker-${address}`,
+		configType: "trojan",
+		security: "tls",
+		tls: "tls",
+		network: "ws",
+		port: port,
+		sni: sni,
+		password: sha224Password,
+		host: sni,
 		address: address,
 	} as Config
 }
@@ -118,6 +136,10 @@ export async function getProxies(env: Env): Promise<Array<string>> {
 	return proxyIPList
 }
 
-export function getUUID(sni: string) : string {
-  return uuidv5(sni.toLowerCase(), "ebc4a168-a6fe-47ce-bc25-6183c6212dcc")
+export function getUUID(sni: string) : UUID {
+  return uuidv5(sni.toLowerCase(), "ebc4a168-a6fe-47ce-bc25-6183c6212dcc") as UUID
+}
+
+export function getSHA224Password(sni: string) : string {
+  return createHash("sha224").update(sni.toLowerCase()).digest("hex")
 }
