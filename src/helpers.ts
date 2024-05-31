@@ -61,6 +61,7 @@ export function GetTrojanConfig(no: number, sha224Password: string, sni: string,
 		sni: sni,
 		password: sha224Password,
 		host: sni,
+		path: "trojan-ws/?ed=2048",
 		address: address,
 	} as Config
 }
