@@ -174,7 +174,7 @@ export async function GetConfigList(url: URL, env: Env): Promise<Array<Config>> 
 
   if (protocols.includes("built-in-vless")) {
     finalConfigList = AddNumberToConfigs(finalConfigList, maxVlessConfigs + 1)
-    finalConfigList = (await GetVlessConfigList(url.hostname, cleanDomainIPs, maxVlessConfigs, env)).concat(finalConfigList)
+    finalConfigList = (await GetVlessConfigList(url.hostname, cleanDomainIPs, 1, maxVlessConfigs, env)).concat(finalConfigList)
   } else {
     finalConfigList = AddNumberToConfigs(finalConfigList, 1)
   }
