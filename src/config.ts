@@ -103,34 +103,34 @@ export function EncodeConfig(conf: Config): string {
         encodeURIComponent(conf.remarks)
       }`;
 
-    // } else if (conf.type == "trojan") {
-    //   return `${
-    //     conf.type
-    //   }://${
-    //     conf.password || conf.uuid
-    //   }@${
-    //     conf.server
-    //   }:${
-    //     conf.port
-    //   }?type=${
-    //     conf.network
-    //   }${
-    //     conf.cipher ? "&cipher=" + encodeURIComponent(conf.cipher) : ""
-    //   }${
-    //     conf.path ? "&path=" + conf.path : ""
-    //   }${
-    //     conf.host ? "&Host=" + conf.host : ""
-    //   }${
-    //     conf.alpn ? "&alpn=" + encodeURIComponent(conf.alpn) : ""
-    //   }${
-    //     conf.fp ? "&fp=" + encodeURIComponent(conf.fp) : ""
-    //   }${
-    //     conf.tls ? "&tls=1" : ""
-    //   }&sni=${
-    //     encodeURIComponent(conf.servername || conf.host || conf.server)
-    //   }#${
-    //     encodeURIComponent(conf.name)
-    //   }`;
+    } else if (conf.configType == "trojan") {
+      return `${
+        conf.configType
+      }://${
+        conf.password || conf.uuid
+      }@${
+        conf.address
+      }:${
+        conf.port
+      }?type=${
+        conf.network
+      }${
+        conf.cipher ? "&cipher=" + encodeURIComponent(conf.cipher) : ""
+      }${
+        conf.path ? "&path=" + conf.path : ""
+      }${
+        conf.host ? "&Host=" + conf.host : ""
+      }${
+        conf.alpn ? "&alpn=" + encodeURIComponent(conf.alpn) : ""
+      }${
+        conf.fp ? "&fp=" + encodeURIComponent(conf.fp) : ""
+      }${
+        conf.tls ? "&tls=1" : ""
+      }&sni=${
+        encodeURIComponent(conf.sni || conf.host || conf.address)
+      }#${
+        encodeURIComponent(conf.remarks)
+      }`;
     // } else if (conf.type == "ss") {
     //   return `${
     //     conf.type
@@ -175,18 +175,17 @@ export function DecodeConfig(configStr: string): Config {
 	if (configStr.startsWith("vmess://")) {
 	  try {
       conf = JSON.parse(Buffer.from(configStr.substring(8), "base64").toString("utf-8"))
-      const network = conf?.net || conf?.type || "tcp"
       const type = conf?.type || ""
       conf = {
         configType: "vmess",
         remarks: conf?.ps,
         address: conf.add,
-        port: parseInt(conf?.port || (conf?.tls == "tls" ? "443" : "80")),
+        port: parseInt(conf.port),
         uuid: conf.id,
         alterId: conf?.aid || 0,
         security: conf?.scy || "auto",
-        network: network,
-        type: type == network ? "" : type,
+        network: conf.net,
+        type: type == conf.net ? "" : type,
         host: conf?.host,
         path: conf?.path || "",
         tls: conf?.tls || "",
@@ -196,8 +195,6 @@ export function DecodeConfig(configStr: string): Config {
 	} else if (configStr.startsWith("vless://")) {
 	  try {
       const url: URL = new URL(configStr)
-      const network = url.searchParams.get('network') || url.searchParams.get('type') || "tcp"
-      const type = url.searchParams.get('type') || ""
       conf = {
         configType: "vless",
         remarks: decodeURIComponent(url.hash.substring(1)),
@@ -206,8 +203,7 @@ export function DecodeConfig(configStr: string): Config {
         uuid: url.username,
         security: url.searchParams.get('security') || "",
         encryption: url.searchParams.get('encryption') || "none",
-        network: network,
-        type: type == network ? "" : type,
+        type: url.searchParams.get('type') || "tcp",
         serviceName: url.searchParams.get('serviceName') || "",
         host: url.searchParams.get('host') || "",
         path: url.searchParams.get('path') || "",
@@ -235,8 +231,8 @@ export function ValidateConfig(conf: Config): boolean {
 	try {
 		if (["vmess", "vless"].includes(conf.configType) && IsValidUUID(conf.uuid as string) && conf.remarks) {
       return !!(conf.address || conf.sni)
-		// } else if (["trojan"].includes(conf.configType) && (conf.uuid || conf.password) && conf.remarks) {
-    //   return !!(conf.server || conf.servername)
+		} else if (["trojan"].includes(conf.configType) && (conf.uuid || conf.password) && conf.remarks) {
+      return !!(conf.address || conf.sni)
 		// } else if (["ss", "ssr"].includes(conf.type) && supportedCiphers.includes(conf.cipher as string)) {
     //   return !!(conf.server || conf.servername)
 		}
