@@ -6,23 +6,22 @@ import { RemoteSocketWrapper, CustomArrayBuffer, VlessHeader, UDPOutbound, Confi
 
 const WS_READY_STATE_OPEN: number = 1
 const WS_READY_STATE_CLOSING: number = 2
-let uuid: string = ""
 let proxyIP: string = ""
 let proxyList: Array<string> = []
 let blockPorn: string = ""
 let filterCountries: string = ""
 let countries: Array<string> = []
 
-export async function GetVlessConfigList(sni: string, addressList: Array<string>, max: number, env: Env) {
+export async function GetVlessConfigList(sni: string, addressList: Array<string>, start: number, max: number, env: Env) {
   filterCountries = ""
   blockPorn = ""
   proxyList = []
-  uuid = getUUID(sni)
+  const uuid: UUID = getUUID(sni)
   let configList: Array<Config> = []
   for (let i = 0; i < max; i++) {
     configList.push(GetVlessConfig(
-      i + 1,
-      uuid as UUID,
+      i + start,
+      uuid,
       MuddleDomain(sni),
       addressList[Math.floor(Math.random() * addressList.length)],
       cfPorts[Math.floor(Math.random() * cfPorts.length)]
@@ -33,7 +32,7 @@ export async function GetVlessConfigList(sni: string, addressList: Array<string>
 }
 
 export async function VlessOverWSHandler(request: Request, sni: string, env: Env) {
-  uuid = getUUID(sni)
+  const uuid = getUUID(sni)
   const [client, webSocket]: Array<WebSocket> = Object.values(new WebSocketPair)
   webSocket.accept()
 
