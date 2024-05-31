@@ -1,27 +1,27 @@
 {
   "name": "v2ray-worker",
-  "version": "0.0.0",
+  "version": "2.4",
+  "author": {
+    "name": "Vahid Farid"
+  },
   "private": true,
   "scripts": {
     "deploy": "wrangler deploy",
     "start": "wrangler dev"
   },
   "devDependencies": {
-    "@cloudflare/workers-types": "^4.20230419.0",
-    "@types/bcryptjs": "^2.4.3",
-    "@types/js-yaml": "^4.0.5",
-    "@types/node": "^20.5.7",
-    "@types/qrcode": "^1.5.1",
-    "@types/uuid": "^9.0.3",
-    "buffer": "^6.0.3",
-    "fs": "^0.0.1-security",
-    "itty-router": "^3.0.12",
-    "js-yaml": "^4.1.0",
+    "@types/bcryptjs": "^2.4.6",
+    "@types/crypto-js": "^4.2.2",
+    "@types/js-yaml": "^4.0.9",
+    "@types/uuid": "^9.0.8",
     "typescript": "^5.0.4",
     "wrangler": "^3.57.2"
   },
   "dependencies": {
     "bcryptjs": "^2.4.3",
-    "uuid": "^9.0.0"
+    "buffer": "^6.0.3",
+    "crypto-js": "^4.2.0",
+    "js-yaml": "^4.1.0",
+    "uuid": "^9.0.1"
   }
 }
