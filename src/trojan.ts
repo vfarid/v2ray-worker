@@ -1,6 +1,6 @@
 import { connect } from 'cloudflare:sockets'
 import { GetTrojanConfig, MuddleDomain, getSHA224Password } from "./helpers"
-import { cfPorts } from "./variables"
+import { cfPorts, proxiesUri } from "./variables"
 import { RemoteSocketWrapper, CustomArrayBuffer, VlessHeader, UDPOutbound, Config, Env } from "./interfaces"
 
 const WS_READY_STATE_OPEN: number = 1
@@ -192,7 +192,7 @@ async function HandleTCPOutbound(remoteSocket: RemoteSocketWrapper, addressRemot
 
     if (!proxyList.length) {
       countries = (await env.settings.get("Countries"))?.split(",").filter(t => t.trim().length > 0) || []        
-      proxyList = await fetch("https://raw.githubusercontent.com/vfarid/v2ray-worker/main/resources/proxy-list.txt").then(r => r.text()).then(t => t.trim().split("\n").filter(t => t.trim().length > 0))
+      proxyList = await fetch(proxiesUri).then(r => r.text()).then(t => t.trim().split("\n").filter(t => t.trim().length > 0))
       if (countries.length > 0) {
         proxyList = proxyList.filter(t => {
           const arr = t.split(",")
