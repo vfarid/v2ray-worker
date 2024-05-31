@@ -1,4 +1,5 @@
-import { UUID, createHash } from "crypto"
+import sha224 from 'crypto-js/sha224'
+import CryptoJSHex from 'crypto-js/enc-hex'
 import { v5 as uuidv5 } from "uuid"
 import { Env, Config } from "./interfaces"
 import { providersUri, proxiesUri } from "./variables"
@@ -27,7 +28,7 @@ export function IsValidUUID(uuid: string): boolean {
 	return /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(uuid)
 }
 
-export function GetVlessConfig(no: number, uuid: UUID, sni: string, address: string, port: number) {
+export function GetVlessConfig(no: number, uuid: string, sni: string, address: string, port: number) {
 	if (address.toLowerCase() == sni.toLowerCase()) {
     address = sni
   }
@@ -136,10 +137,10 @@ export async function getProxies(env: Env): Promise<Array<string>> {
 	return proxyIPList
 }
 
-export function getUUID(sni: string) : UUID {
-  return uuidv5(sni.toLowerCase(), "ebc4a168-a6fe-47ce-bc25-6183c6212dcc") as UUID
+export function getUUID(sni: string) : string {
+  return uuidv5(sni.toLowerCase(), "ebc4a168-a6fe-47ce-bc25-6183c6212dcc") as string
 }
 
 export function getSHA224Password(sni: string) : string {
-  return createHash("sha224").update(sni.toLowerCase()).digest("hex")
+  return sha224(sni.toLowerCase()).toString(CryptoJSHex)
 }
