@@ -1,6 +1,6 @@
 import * as bcrypt from 'bcryptjs'
 import { GenerateToken } from "./helpers"
-import { version, defaultProtocols, defaultALPNList, defaultPFList } from "./variables"
+import { version, defaultProtocols, proxiesUri } from "./variables"
 import { Env } from "./interfaces"
 
 export async function GetPanel(request: Request, env: Env): Promise<Response> {
@@ -32,7 +32,7 @@ export async function GetPanel(request: Request, env: Env): Promise<Response> {
     const providers = (await env.settings.get("Providers"))?.split("\n").filter(t => t.trim().length > 0) || []
     const countries = (await env.settings.get("Countries"))?.split(",").filter(t => t.trim().length > 0) || []
 
-    let allCountries = await fetch("https://raw.githubusercontent.com/vfarid/v2ray-worker/main/resources/proxy-list.txt").then(r => r.text()).then(t => {
+    let allCountries = await fetch(proxiesUri).then(r => r.text()).then(t => {
       return t.trim().split("\n").map(t => {
         const arr = t.split(",")
         return arr.length > 0 ? arr[1]?.toString().trim().toUpperCase() : ""
@@ -232,11 +232,11 @@ export async function GetPanel(request: Request, env: Env): Promise<Response> {
             "providers-auto-title": "Auto load from github",
             "providers-remarks": "One link per line (base64, yaml, raw).",
             "countries-title": "Limit By Country (Only for websites beind Cloudflare Network)",
-            "countries-all-title": "If you check this option, all protocols will be deactivated except built-in vless protocols.",
+            "countries-all-title": "If you check this option, all protocols will be deactivated except built-in protocols.",
             "personal-configs-title": "Private Configs",
             "personal-configs-remarks": "One config per line.",
             "block-porn-title": "‌Block Porn",
-            "block-porn-remarks": "If you check this option, porn websites will be blocked and all protocols will be deactivated except built-in vless protocols.",
+            "block-porn-remarks": "If you check this option, porn websites will be blocked and all protocols will be deactivated except built-in vless protocol.",
             "enable-fragments-title": "Enable Fragments",
             "enable-fragments-remarks": "If you check this option, fragments will be enabled for all TLS configs using random values.",
             "save-button": "Save",
@@ -265,7 +265,7 @@ export async function GetPanel(request: Request, env: Env): Promise<Response> {
             "providers-auto-title": "دریافت خودکار از گیت‌هاب",
             "providers-remarks": "در هر سطر یک لینک وارد کنید (base64, yaml, raw).",
             "countries-title": "محدود کردن کشور (فقط برای وبسایت‌های پشت شبکه کلادفلر)",
-            "countries-all-title": "در صورت فعال‌سازی این گزینه، تمام پروتکل‌ها بجز vless های داخلی ورکر غیرفعال می‌شوند.",
+            "countries-all-title": "در صورت فعال‌سازی این گزینه، تمام پروتکل‌ها بجز پروتکل‌های داخلی ورکر غیرفعال می‌شوند.",
             "personal-configs-title": "کانفیگ‌های خصوصی",
             "personal-configs-remarks": "در هر سطر یک کانفیگ وارد کنید.",
             "block-porn-title": "مسدودسازی پورن",
@@ -324,12 +324,16 @@ export async function GetPanel(request: Request, env: Env): Promise<Response> {
                 <label class="form-check-label" for="vmess-protocol-ckeck">VMESS</label>
               </div>
               <div>
+                <input type="checkbox" name="protocols" value="vless" class="form-check-input" id="vless-protocol-ckeck" ${protocols.includes('vless') ? "checked" : ""} />
+                <label class="form-check-label" for="vless-protocol-ckeck">VLESS</label>
+              </div>
+              <div>
                 <input type="checkbox" name="protocols" value="built-in-vless" class="form-check-input" id="built-in-vless-protocol-ckeck" ${protocols.includes('built-in-vless') ? "checked" : ""} />
                 <label class="form-check-label" for="built-in-vless-protocol-ckeck">Built-in VLESS</label>
               </div>
               <div>
-                <input type="checkbox" name="protocols" value="vless" class="form-check-input" id="vless-protocol-ckeck" ${protocols.includes('vless') ? "checked" : ""} />
-                <label class="form-check-label" for="vless-protocol-ckeck">VLESS</label>
+                <input type="checkbox" name="protocols" value="built-in-trojan" class="form-check-input" id="built-in-trojan-protocol-ckeck" ${protocols.includes('built-in-trojan') ? "checked" : ""} />
+                <label class="form-check-label" for="built-in-trojan-protocol-ckeck">Built-in Trojan</label>
               </div>
             </div>
           </div>
