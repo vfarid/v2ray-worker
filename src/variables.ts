@@ -1,4 +1,4 @@
-export const version: string = "2.3"
+export const version: string = "2.4"
 export const providersUri: string = "https://raw.githubusercontent.com/vfarid/v2ray-worker/main/resources/provider-list.txt"
 export const proxiesUri: string = "https://raw.githubusercontent.com/vfarid/v2ray-worker/main/resources/proxy-list.txt"
 
@@ -6,6 +6,7 @@ export const defaultProtocols: Array<string> = [
   "vmess",
   "built-in-vless",
   "vless",
+  "built-in-trojan",
 ]
 
 export const defaultALPNList: Array<string> = [
