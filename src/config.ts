@@ -119,7 +119,7 @@ export function EncodeConfig(conf: Config): string {
       }${
         conf.path ? "&path=" + conf.path : ""
       }${
-        conf.host ? "&Host=" + conf.host : ""
+        conf.host ? "&host=" + conf.host : ""
       }${
         conf.alpn ? "&alpn=" + encodeURIComponent(conf.alpn) : ""
       }${
