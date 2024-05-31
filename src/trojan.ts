@@ -1,7 +1,8 @@
 import { connect } from 'cloudflare:sockets'
-import { GetTrojanConfig, MuddleDomain, getSHA224Password } from "./helpers"
+import { GetTrojanConfig, MuddleDomain, getSHA224Password, getUUID } from "./helpers"
 import { cfPorts, proxiesUri } from "./variables"
 import { RemoteSocketWrapper, CustomArrayBuffer, VlessHeader, UDPOutbound, Config, Env } from "./interfaces"
+import { encodeBase64 } from 'bcryptjs'
 
 const WS_READY_STATE_OPEN: number = 1
 const WS_READY_STATE_CLOSING: number = 2
@@ -13,12 +14,11 @@ let countries: Array<string> = []
 export async function GetTrojanConfigList(sni: string, addressList: Array<string>, start: number, max: number, env: Env) {
   filterCountries = ""
   proxyList = []
-  const sha224Password: string = getSHA224Password(sni)
   let configList: Array<Config> = []
   for (let i = 0; i < max; i++) {
     configList.push(GetTrojanConfig(
       i + start,
-      sha224Password,
+      getUUID(sni),
       MuddleDomain(sni),
       addressList[Math.floor(Math.random() * addressList.length)],
       cfPorts[Math.floor(Math.random() * cfPorts.length)]
@@ -29,7 +29,7 @@ export async function GetTrojanConfigList(sni: string, addressList: Array<string
 }
 
 export async function TrojanOverWSHandler(request: Request, sni: string, env: Env) {
-  const sha224Password = getSHA224Password(sni)
+  const sha224Password = getSHA224Password(getUUID(sni))
   const [client, webSocket]: Array<WebSocket> = Object.values(new WebSocketPair)
   webSocket.accept()
 
@@ -41,8 +41,6 @@ export async function TrojanOverWSHandler(request: Request, sni: string, env: En
     value: null,
   }
 
-  let portWithRandomLog = "";
-  
   readableWebSocketStream.pipeTo(new WritableStream({
     async write(chunk, controller) {
       if (remoteSocketWapper.value) {
@@ -56,20 +54,17 @@ export async function TrojanOverWSHandler(request: Request, sni: string, env: En
         message,
         portRemote = 443,
         addressRemote = "",
-        rawDataIndex
+        rawClientData,
       } = await ParseTrojanHeader(chunk, sha224Password);
       address = addressRemote;
-      portWithRandomLog = `${portRemote}--${Math.random()} tcp`;
       if (hasError) {
         throw new Error(message);
       }
-      const rawClientData: Uint8Array = chunk.slice(rawDataIndex)
       HandleTCPOutbound(remoteSocketWapper, addressRemote, portRemote, rawClientData, webSocket, env);
     },
   })).catch((err) => { });
   return new Response(null, {
     status: 101,
-    // @ts-ignore
     webSocket: client
   });
 }
@@ -163,11 +158,11 @@ async function ParseTrojanHeader(buffer: ArrayBuffer, sha224Password: string) {
         hasError: false,
         addressRemote: address,
         portRemote,
-        rawDataIndex: addressIndex + addressLength,
+        rawClientData: socks5DataBuffer.slice(portIndex + 4),
     };
 }
 
-async function HandleTCPOutbound(remoteSocket: RemoteSocketWrapper, addressRemote: string, portRemote: number, rawClientData: Uint8Array | undefined, webSocket: WebSocket, env: Env): Promise<void> {
+async function HandleTCPOutbound(remoteSocket: RemoteSocketWrapper, addressRemote: string, portRemote: number, rawClientData: ArrayBuffer | undefined, webSocket: WebSocket, env: Env): Promise<void> {
   const maxRetryCount = 5
   let retryCount = 0;
   
@@ -178,7 +173,8 @@ async function HandleTCPOutbound(remoteSocket: RemoteSocketWrapper, addressRemot
     }
     const tcpSocket: Socket = connect(socketAddress)
     remoteSocket.value = tcpSocket
-    const writer: WritableStreamDefaultWriter<Uint8Array> = tcpSocket.writable.getWriter()
+    // console.log(`connected to ${address}:${port}`);
+    const writer: WritableStreamDefaultWriter<ArrayBuffer> = tcpSocket.writable.getWriter()
     await writer.write(rawClientData)
     writer.releaseLock()
     return tcpSocket
@@ -202,7 +198,6 @@ async function HandleTCPOutbound(remoteSocket: RemoteSocketWrapper, addressRemot
         })
       }
       proxyList = proxyList.map(ip => ip.split(",")[0])
-      console.log(proxyList)
     }
     if (proxyList.length > 0) {
       proxyIP = proxyList[Math.floor(Math.random() * proxyList.length)]
