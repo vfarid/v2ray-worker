@@ -1,22 +1,51 @@
 import yaml from 'js-yaml'
 import { defaultClashConfig } from "./variables"
-import { Config } from './interfaces';
+import { Config, ClashConfig } from './interfaces';
 
 export function ToYamlSubscription(configList: Array<Config>): string {
     let clash = defaultClashConfig
-    clash.proxies = configList.map((conf: any) => (({merged, ...others}) => others)(conf))
-    const groupedConfigs: any = configList.reduce((group: {[key: string]: any}, conf: any) => {
-        if (!group[conf?.merged ? 'Worker' : 'Original']) {
-            group[conf?.merged ? 'Worker' : 'Original'] = [];
+    clash.proxies = configList.map((conf: Config) => {
+        let {
+            configType,
+            type,
+            remarks,
+            address,
+            tls,
+            alpn,
+            merged,
+            ...rest
+        } = conf
+        if (conf.type) {
+            rest.network = conf.type
         }
-        group[conf?.merged ? 'Worker' : 'Original'].push(conf);
-        return group;
-    }, {});
-    let proxyTiers: any = []
-    for (const worker in groupedConfigs) {
-        proxyTiers[worker] = groupedConfigs[worker]
+        let config: ClashConfig = {
+            name: conf.remarks,
+            server: conf.address,
+            type: conf.configType,
+            tls: conf.tls == "tls",
+            cipher: "auto",
+            ...rest
+        }
+        return config
+    })
+    let proxyTiers: {
+        "All": Array<string>,
+        "Built-in": Array<string>,
+        "Merged": Array<string>,
+        "Original": Array<string>,
+    } = {
+        "All": [],
+        "Built-in": [],
+        "Merged": [],
+        "Original": [],
     }
-    let proxyGroups = [
+    configList.forEach((conf: Config) => {
+        const grp = ["vless-ws", "trojan-ws"].includes(conf.path.split("?")[0].split("/")[0]) ? "Built-in" : (conf?.merged ? 'Merged' : 'Original')
+        proxyTiers[grp].push(conf.remarks)
+        proxyTiers["All"].push(conf.remarks)
+    });
+
+    clash['proxy-groups'] = [
         {
             name: "All",
             type: "select",
@@ -25,21 +54,24 @@ export function ToYamlSubscription(configList: Array<Config>): string {
                 "All - Fallback",
                 "All - LoadBalance(ch)",
                 "All - LoadBalance(rr)",
-            ].concat(Object.keys(proxyTiers)),
+                "Built-in - UrlTest",
+                "Merged - UrlTest",
+                "Original - UrlTest",
+            ].concat(proxyTiers["All"]),
         },
         {
             name: "All - UrlTest",
             type: "url-test",
             url: "http://clients3.google.com/generate_204",
             interval: 600,
-            proxies: Object.keys(proxyTiers),
+            proxies: proxyTiers["All"],
         },
         {
             name: "All - Fallback",
             type: "fallback",
             url: "http://clients3.google.com/generate_204",
             interval: 600,
-            proxies: Object.keys(proxyTiers),
+            proxies: proxyTiers["All"],
         },
         {
             name: "All - LoadBalance(ch)",
@@ -47,7 +79,7 @@ export function ToYamlSubscription(configList: Array<Config>): string {
             strategy: "consistent-hashing",
             url: "http://clients3.google.com/generate_204",
             interval: 600,
-            proxies: Object.keys(proxyTiers),
+            proxies: proxyTiers["All"],
         },
         {
             name: "All - LoadBalance(rr)",
@@ -55,19 +87,30 @@ export function ToYamlSubscription(configList: Array<Config>): string {
             strategy: "round-robin",
             url: "http://clients3.google.com/generate_204",
             interval: 600,
-            proxies: Object.keys(proxyTiers),
+            proxies: proxyTiers["All"],
         },
-    ]
-    for (const tier in proxyTiers) {
-        proxyGroups.push({
-            name: tier,
+        {
+            name: "Built-in - UrlTest",
             type: "url-test",
             url: "http://clients3.google.com/generate_204",
             interval: 600,
-            proxies: proxyTiers[tier],
-        })
-    }
+            proxies: proxyTiers["Built-in"],
+        },
+        {
+            name: "Merged - UrlTest",
+            type: "url-test",
+            url: "http://clients3.google.com/generate_204",
+            interval: 600,
+            proxies: proxyTiers["Merged"],
+        },
+        {
+            name: "Original - UrlTest",
+            type: "url-test",
+            url: "http://clients3.google.com/generate_204",
+            interval: 600,
+            proxies: proxyTiers["Original"],
+        },
+    ]
 
-    clash['proxy-groups'] = proxyGroups
     return yaml.dump(clash)
 }
