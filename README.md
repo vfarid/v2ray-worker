@@ -20,4 +20,4 @@ To be completed...
 Built-in vless config generator is based on [Zizifn Edge Tunnel](https://github.com/zizifn/edgetunnel), re-written using Typescript.
 Built-in trojan config generator is based on [ca110us/epeius](https://github.com/ca110us/epeius/tree/main), re-written using Typescript.
 Proxy IPs source: https://rentry.co/CF-proxyIP
-edited by sina
+edited by sinaa
