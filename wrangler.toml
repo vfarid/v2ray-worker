@@ -3,7 +3,7 @@ main = "src/index.ts"
 compatibility_date = "2025-12-01"
 usage_model = "bundled"
 
-# Bind your KV namespace
+# KV namespace binding
 [[kv_namespaces]]
 binding = "settings"
 id = "${KV_NAME}"
