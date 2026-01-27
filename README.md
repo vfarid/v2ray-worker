@@ -1,22 +1,31 @@
 # V2Ray Worker
- Total solution for v2ray configs over Cloudflare's worker
 
-[نسخه فارسی](https://github.com/vfarid/v2ray-worker/blob/main/README-fa.md)
+Total solution for V2Ray configs over Cloudflare's worker.
 
-## How to use
+## 🚀 Deploy
 
-To be completed...
+Click the button below to deploy this Worker to your Cloudflare account.
 
-## Deploy 
- 1. Fork this Repo and enable Github Action
- 2. Open CloudFlare and create KV namespace with name `settings` then copy the ID
- 3. Go to this forked repo and set secrets with name `KV_NAME` and fill with KV settings ID
- 4. Edit this `README.md` file, then find and replace this button url bellow with yours `https://github.com/USER/REPO_NAME` then save it.
- 4. then press `Deploy With Workers` and follow the instruction
+[![Deploy to Cloudflare Workers](https://deploy.workers.cloudflare.com/button)](https://deploy.workers.cloudflare.com/?url=https://github.com/YOUR_GITHUB_USERNAME/v2ray-worker)
 
-[![Deploy to Cloudflare Workers](https://deploy.workers.cloudflare.com/button)](https://deploy.workers.cloudflare.com/?url=https://github.com/vfarid/v2ray-worker)
+---
 
-### Credits
-Built-in vless config generator is based on [Zizifn Edge Tunnel](https://github.com/zizifn/edgetunnel), re-written using Typescript.
-Built-in trojan config generator is based on [ca110us/epeius](https://github.com/ca110us/epeius/tree/main), re-written using Typescript.
-Proxy IPs source: https://rentry.co/CF-proxyIP
+### Manual Setup
+
+1. Fork this repository and enable GitHub Actions.
+2. Open Cloudflare dashboard → Workers → KV → create a namespace named `settings`, then copy the Namespace ID.
+3. In this repo (your fork), go to **Settings → Secrets and variables → Actions**:
+   - `CLOUDFLARE_API_TOKEN` (Cloudflare token with Workers+KV edit scope)
+   - `CLOUDFLARE_ACCOUNT_ID` (your CF account ID)
+   - `KV_NAME` (your KV namespace ID)
+4. Push to `main` and let GitHub Actions deploy.
+5. Visit your Worker deployment URL.
+
+---
+
+## 📦 How it works
+
+This Worker serves V2Ray config links using TypeScript and Cloudflare KV for storage.
+
+Credits:
+- Built-in generation based on vless generators and edge tools.

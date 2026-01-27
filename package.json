@@ -9,6 +9,17 @@
     "deploy": "wrangler deploy",
     "start": "wrangler dev"
   },
+	{
+  "name": "v2ray-worker",
+  "version": "1.0.0",
+  "scripts": {
+    "build": "tsc"
+  },
+  "devDependencies": {
+    "typescript": "^5.1.0"
+  }
+}
+
   "devDependencies": {
     "@cloudflare/workers-types": "^4.20240529.0",
     "@types/bcryptjs": "^2.4.6",
