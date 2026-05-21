@@ -13,9 +13,12 @@
     "@cloudflare/workers-types": "^4.20240529.0",
     "@types/bcryptjs": "^2.4.6",
     "@types/crypto-js": "^4.2.2",
+    "@types/jest": "^30.0.0",
     "@types/js-yaml": "^4.0.9",
     "@types/node": "^20.12.13",
     "@types/uuid": "^9.0.8",
+    "jest": "^30.4.2",
+    "ts-jest": "^29.4.10",
     "typescript": "^5.0.4",
     "wrangler": "^3.57.2"
   },
@@ -24,6 +27,7 @@
     "buffer": "^6.0.3",
     "crypto-js": "^4.2.0",
     "js-yaml": "^4.1.0",
+    "qrcode": "^1.5.4",
     "uuid": "^9.0.1"
   }
 }
